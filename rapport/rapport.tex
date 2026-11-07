@@ -14,6 +14,7 @@
 \usepackage{enumitem}
 \usepackage{tikz}
 \usetikzlibrary{arrows.meta,positioning}
+\usepackage{fancyhdr}
 \usepackage[hidelinks]{hyperref}
 
 \definecolor{accent}{HTML}{C4006A}
@@ -25,16 +26,34 @@
 
 \newcommand{\dollar}{\,\$}
 
+% logo de l'école : déposer le fichier dans figs/ (logo_ensat.png, .jpg ou .pdf)
+\newcommand{\logo}[1]{%
+  \IfFileExists{figs/logo_ensat.png}{\includegraphics[height=#1]{figs/logo_ensat.png}}{%
+  \IfFileExists{figs/logo_ensat.jpg}{\includegraphics[height=#1]{figs/logo_ensat.jpg}}{%
+  \IfFileExists{figs/logo_ensat.pdf}{\includegraphics[height=#1]{figs/logo_ensat.pdf}}{}}}}
+\setlength{\headheight}{26pt}
+\pagestyle{fancy}
+\fancyhf{}
+\lhead{\logo{11mm}}
+\rhead{\small\textcolor{black!60}{ENSA Tétouan · Deep Learning · GSTR 2}}
+\cfoot{\thepage}
+\renewcommand{\headrulewidth}{.4pt}
+\renewcommand{\headrule}{\hbox to\headwidth{\color{accent}\leaders\hrule height \headrulewidth\hfill}}
+
 \begin{document}
 
 % ------------------------------------------------------------------ titre
 \begin{titlepage}
+\thispagestyle{empty}
 \centering
-\vspace*{3cm}
-{\large Cours de Deep Learning --- GSTR, semestre 3}\\[1.2cm]
+\vspace*{1.5cm}
+\logo{28mm}\par\vspace{.5cm}
+{\large École nationale des sciences appliquées de Tétouan}\\[.2cm]
+{\large Cours de Deep Learning --- GSTR 2, semestre 3}\\[1.2cm]
 {\Huge\bfseries Agents autonomes d'investissement\\[.3cm] sur le Polkadot (DOT/USD)}\\[.8cm]
 {\large Prévision par réseaux récurrents, simulation de portefeuille\\ et registre blockchain}\\[2.5cm]
 {\large Tayeb Abboud}\\[.4cm]
+ENSA Tétouan, filière GSTR 2\\[.4cm]
 Enseignant : C.\ Okar\\[.4cm]
 Novembre 2026\\[3cm]
 \begin{minipage}{.8\textwidth}\small\centering
