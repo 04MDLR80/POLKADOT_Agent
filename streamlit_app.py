@@ -109,10 +109,20 @@ with t_live:
             st.error("Coupe-circuit actif : les achats sont bloqués (valeur < 85 % du capital).")
         h = pd.DataFrame(v["histo"])
         if len(h) > 1:
+            import altair as alt
             h["t"] = pd.to_datetime(h["t"], errors="coerce")
-            st.line_chart(h.set_index("t")[["valeur", "bh"]].rename(
-                columns={"valeur": "Agents", "bh": "Buy and Hold"}), height=320)
-            st.line_chart(h.set_index("t")[["prix"]].rename(columns={"prix": "DOT/USD"}), height=200)
+            lg = h.rename(columns={"valeur": "Agents", "bh": "Buy and Hold"}).melt(
+                "t", ["Agents", "Buy and Hold"], var_name="série", value_name="valeur ($)")
+            lo, hi = lg["valeur ($)"].min(), lg["valeur ($)"].max()
+            marge = max((hi - lo) * 0.15, cap * 0.002)
+            st.altair_chart(alt.Chart(lg).mark_line().encode(
+                x=alt.X("t:T", title=None),
+                y=alt.Y("valeur ($):Q", scale=alt.Scale(domain=[lo - marge, hi + marge], zero=False)),
+                color="série:N").properties(height=320), use_container_width=True)
+            st.altair_chart(alt.Chart(h).mark_line().encode(
+                x=alt.X("t:T", title=None),
+                y=alt.Y("prix:Q", title="DOT/USD", scale=alt.Scale(zero=False))).properties(height=200),
+                use_container_width=True)
         else:
             st.info("En attente des premiers prix…")
         st.subheader("Dernières décisions")
