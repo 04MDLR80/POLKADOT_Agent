@@ -1,0 +1,82 @@
+{
+ "n_jours": 2096,
+ "debut": "2021-02-08",
+ "fin": "2026-11-04",
+ "prix_min": 0.752,
+ "date_min": "2026-08-18",
+ "prix_max": 53.843,
+ "date_max": "2021-11-04",
+ "prix_debut": 23.01,
+ "prix_fin": 0.927,
+ "perte_max_depuis_sommet": -0.9860334676745353,
+ "rendement_moyen_jour": -0.0015330456407940606,
+ "ecart_type_jour": 0.04868876172723921,
+ "volatilite_annualisee": 0.9301974867006112,
+ "asymetrie": -0.4562707071013081,
+ "kurtosis_excess": 8.590048504218945,
+ "pire_jour": -0.4851477653707543,
+ "date_pire": "2021-05-19",
+ "meilleur_jour": 0.2945245221708521,
+ "date_meilleur": "2026-02-25",
+ "part_jours_hausse": 0.4816229116945107,
+ "jarque_bera": 6513.849519291568,
+ "jarque_bera_p": 0.0,
+ "adf_prix_log": -0.7041407495254683,
+ "adf_rendements": -33.53216425211699,
+ "adf_valeur_critique_5pc": -2.86,
+ "ljung_box_rendements_q10": 26.02560143163143,
+ "ljung_box_rendements_p": 0.0037059055805637175,
+ "ljung_box_carres_q10": 273.9439096927749,
+ "ljung_box_carres_p": 0.0,
+ "acf_rendements_lag1": -0.023827621142580416,
+ "par_annee": [
+  {
+   "annee": 2021,
+   "debut": 23.01,
+   "fin": 26.689,
+   "rendement": 0.15988700564971747,
+   "volatilite": 1.3881996169799873,
+   "n_jours": 327
+  },
+  {
+   "annee": 2022,
+   "debut": 26.689,
+   "fin": 4.3,
+   "rendement": -0.8388849338678857,
+   "volatilite": 0.9360003825936503,
+   "n_jours": 365
+  },
+  {
+   "annee": 2023,
+   "debut": 4.3,
+   "fin": 8.204,
+   "rendement": 0.9079069767441863,
+   "volatilite": 0.6361468025070542,
+   "n_jours": 365
+  },
+  {
+   "annee": 2024,
+   "debut": 8.204,
+   "fin": 6.646,
+   "rendement": -0.18990736226231109,
+   "volatilite": 0.8352785220574288,
+   "n_jours": 366
+  },
+  {
+   "annee": 2025,
+   "debut": 6.646,
+   "fin": 1.788,
+   "rendement": -0.7309659945832079,
+   "volatilite": 0.8564391023722879,
+   "n_jours": 365
+  },
+  {
+   "annee": 2026,
+   "debut": 1.788,
+   "fin": 0.927,
+   "rendement": -0.48154362416107377,
+   "volatilite": 0.7938189262136568,
+   "n_jours": 308
+  }
+ ]
+}

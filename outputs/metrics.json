@@ -1,0 +1,403 @@
+{
+ "donnees": {
+  "n_jours": 2096,
+  "debut": "2021-02-08",
+  "fin": "2026-11-04",
+  "n_fenetres": 2052,
+  "n_train": 1226,
+  "n_val": 303,
+  "n_test": 513,
+  "fenetre": 20,
+  "horizon": 5,
+  "variables": [
+   "ret",
+   "rng",
+   "dvol",
+   "madev20",
+   "mom5",
+   "mom20",
+   "vol20",
+   "rsi14"
+  ],
+  "jours_ajoutes": [
+   "2025-01-12"
+  ]
+ },
+ "verification_gradient": {
+  "GRU": 8.013632521305062e-07,
+  "LSTM": 3.9976386447154564e-07
+ },
+ "modele_agents": "LSTM",
+ "recherche_hyperparametres": {
+  "GRU": [
+   {
+    "n_hid": 4,
+    "l2": 0.01,
+    "rmse_val": 0.10713875032456043
+   },
+   {
+    "n_hid": 8,
+    "l2": 0.01,
+    "rmse_val": 0.10783927623576263
+   },
+   {
+    "n_hid": 8,
+    "l2": 0.001,
+    "rmse_val": 0.10620601276512852
+   }
+  ],
+  "LSTM": [
+   {
+    "n_hid": 4,
+    "l2": 0.01,
+    "rmse_val": 0.10363711294776658
+   },
+   {
+    "n_hid": 8,
+    "l2": 0.01,
+    "rmse_val": 0.10441676432862546
+   },
+   {
+    "n_hid": 8,
+    "l2": 0.001,
+    "rmse_val": 0.1047005920407558
+   }
+  ]
+ },
+ "retenu": {
+  "n_hid": 4,
+  "l2": 0.01,
+  "rmse_val": 0.10363711294776658
+ },
+ "retenus": {
+  "GRU": {
+   "n_hid": 8,
+   "l2": 0.001,
+   "rmse_val": 0.10620601276512852
+  },
+  "LSTM": {
+   "n_hid": 4,
+   "l2": 0.01,
+   "rmse_val": 0.10363711294776658
+  }
+ },
+ "epoques": {
+  "GRU": [
+   82,
+   117,
+   96,
+   105,
+   104
+  ],
+  "LSTM": [
+   122,
+   145,
+   214,
+   123,
+   132
+  ]
+ },
+ "prevision": {
+  "train": {
+   "GRU": {
+    "MAE": 0.07532604483672026,
+    "RMSE": 0.10224077102202103,
+    "direction": 0.5864600326264274
+   },
+   "LSTM": {
+    "MAE": 0.0744967921512423,
+    "RMSE": 0.10150626628454615,
+    "direction": 0.5897226753670473
+   },
+   "Naif_zero": {
+    "MAE": 0.07925737799097553,
+    "RMSE": 0.10929258070709717,
+    "direction": 0.0032626427406199023
+   },
+   "Naif_moyenne_train": {
+    "MAE": 0.07929169813348401,
+    "RMSE": 0.10902752829554509,
+    "direction": 0.5146818923327896
+   }
+  },
+  "validation": {
+   "GRU": {
+    "MAE": 0.08025801888660722,
+    "RMSE": 0.10620601276512852,
+    "direction": 0.528052805280528
+   },
+   "LSTM": {
+    "MAE": 0.07906512280915352,
+    "RMSE": 0.10363711294776658,
+    "direction": 0.5775577557755776
+   },
+   "Naif_zero": {
+    "MAE": 0.08214448539149928,
+    "RMSE": 0.1082603425109302,
+    "direction": 0.0
+   },
+   "Naif_moyenne_train": {
+    "MAE": 0.08207677656627045,
+    "RMSE": 0.10832571071406621,
+    "direction": 0.5214521452145214
+   }
+  },
+  "test": {
+   "GRU": {
+    "MAE": 0.0695601852580731,
+    "RMSE": 0.09185353940502809,
+    "direction": 0.5126705653021443
+   },
+   "LSTM": {
+    "MAE": 0.0698159548648504,
+    "RMSE": 0.0914114601743479,
+    "direction": 0.5263157894736842
+   },
+   "Naif_zero": {
+    "MAE": 0.06955581208080644,
+    "RMSE": 0.08956343527836735,
+    "direction": 0.0
+   },
+   "Naif_moyenne_train": {
+    "MAE": 0.06838504476753751,
+    "RMSE": 0.08868762313532486,
+    "direction": 0.5886939571150097
+   }
+  }
+ },
+ "strategies": [
+  {
+   "strategie": "Agents LSTM",
+   "valeur_initiale": 10000.0,
+   "valeur_finale": 8186.539913221187,
+   "profit_net": -1813.460086778813,
+   "rendement_total": -0.1813460086778813,
+   "rendement_annualise": -0.1326970208009718,
+   "max_drawdown": -0.291905887536283,
+   "sharpe": -0.5649214355854979,
+   "n_ordres": 16,
+   "n_trades_clotures": 6,
+   "taux_reussite": 0.5,
+   "frais_totaux": 240.30684803038753,
+   "n_jours": 513
+  },
+  {
+   "strategie": "Règle technique (MM20)",
+   "valeur_initiale": 10000.0,
+   "valeur_finale": 8097.289096181753,
+   "profit_net": -1902.710903818247,
+   "rendement_total": -0.19027109038182466,
+   "rendement_annualise": -0.13943521952371118,
+   "max_drawdown": -0.30375111501160085,
+   "sharpe": -0.8446606232772975,
+   "n_ordres": 15,
+   "n_trades_clotures": 7,
+   "taux_reussite": 0.14285714285714285,
+   "frais_totaux": 276.49013662157864,
+   "n_jours": 513
+  },
+  {
+   "strategie": "Buy and Hold",
+   "valeur_initiale": 10000.0,
+   "valeur_finale": 2469.4298003557055,
+   "profit_net": -7530.570199644295,
+   "rendement_total": -0.7530570199644294,
+   "rendement_annualise": -0.630314898010615,
+   "max_drawdown": -0.8347978910369068,
+   "sharpe": -0.7772749519592445,
+   "n_ordres": 1,
+   "n_trades_clotures": 0,
+   "taux_reussite": null,
+   "frais_totaux": 25.932575304209056,
+   "n_jours": 513
+  }
+ ],
+ "ablation": [
+  {
+   "strategie": "Agents LSTM sans coupe-circuit",
+   "valeur_initiale": 10000.0,
+   "valeur_finale": 6310.787280111415,
+   "profit_net": -3689.2127198885846,
+   "rendement_total": -0.3689212719888585,
+   "rendement_annualise": -0.2792921624774378,
+   "max_drawdown": -0.5464983410830045,
+   "sharpe": -0.7046400719167918,
+   "n_ordres": 45,
+   "n_trades_clotures": 19,
+   "taux_reussite": 0.5263157894736842,
+   "frais_totaux": 606.3201625562996,
+   "n_jours": 513
+  },
+  {
+   "strategie": "Agents LSTM sans stop-loss ni coupe-circuit",
+   "valeur_initiale": 10000.0,
+   "valeur_finale": 7994.796791708428,
+   "profit_net": -2005.203208291572,
+   "rendement_total": -0.20052032082915716,
+   "rendement_annualise": -0.14719960788680864,
+   "max_drawdown": -0.45069329760366783,
+   "sharpe": -0.21879767727007313,
+   "n_ordres": 40,
+   "n_trades_clotures": 14,
+   "taux_reussite": 0.5714285714285714,
+   "frais_totaux": 510.31624696011494,
+   "n_jours": 513
+  }
+ ],
+ "autre_modele": {
+  "strategie": "Agents GRU",
+  "valeur_initiale": 10000.0,
+  "valeur_finale": 8415.137644974448,
+  "profit_net": -1584.8623550255525,
+  "rendement_total": -0.15848623550255525,
+  "rendement_annualise": -0.1155343153832118,
+  "max_drawdown": -0.23273002989076186,
+  "sharpe": -0.5705730335516319,
+  "n_ordres": 17,
+  "n_trades_clotures": 7,
+  "taux_reussite": 0.2857142857142857,
+  "frais_totaux": 272.43804349335215,
+  "n_jours": 513,
+  "seuils": {
+   "achat": 0.0062,
+   "vente": -0.00933980851035786
+  }
+ },
+ "sensibilite": [
+  {
+   "parametre": "Référence",
+   "valeur": "-",
+   "valeur_finale": 8186.539913221187,
+   "rendement_total": -0.1813460086778813,
+   "max_drawdown": -0.291905887536283,
+   "sharpe": -0.5649214355854979,
+   "n_ordres": 16
+  },
+  {
+   "parametre": "Coupe-circuit",
+   "valeur": "aucun",
+   "valeur_finale": 6310.787280111415,
+   "rendement_total": -0.3689212719888585,
+   "max_drawdown": -0.5464983410830045,
+   "sharpe": -0.7046400719167918,
+   "n_ordres": 45
+  },
+  {
+   "parametre": "Coupe-circuit",
+   "valeur": "75 %",
+   "valeur_finale": 7044.234252160929,
+   "rendement_total": -0.2955765747839071,
+   "max_drawdown": -0.3907095239693555,
+   "sharpe": -0.8008506308693434,
+   "n_ordres": 25
+  },
+  {
+   "parametre": "Coupe-circuit",
+   "valeur": "90 %",
+   "valeur_finale": 8907.491121846564,
+   "rendement_total": -0.10925088781534364,
+   "max_drawdown": -0.22954727063431496,
+   "sharpe": -0.3191260422172382,
+   "n_ordres": 13
+  },
+  {
+   "parametre": "Stop-loss",
+   "valeur": "aucun",
+   "valeur_finale": 8339.199965894873,
+   "rendement_total": -0.16608000341051266,
+   "max_drawdown": -0.2787015685379646,
+   "sharpe": -0.4942984961956773,
+   "n_ordres": 16
+  },
+  {
+   "parametre": "Stop-loss",
+   "valeur": "5 %",
+   "valeur_finale": 8396.459602258394,
+   "rendement_total": -0.16035403977416063,
+   "max_drawdown": -0.27374890088830933,
+   "sharpe": -0.29690313725636674,
+   "n_ordres": 36
+  },
+  {
+   "parametre": "Stop-loss",
+   "valeur": "20 %",
+   "valeur_finale": 8339.199965894873,
+   "rendement_total": -0.16608000341051266,
+   "max_drawdown": -0.2787015685379646,
+   "sharpe": -0.4942984961956773,
+   "n_ordres": 16
+  },
+  {
+   "parametre": "Plafond d'exposition",
+   "valeur": "50 %",
+   "valeur_finale": 8075.975660269125,
+   "rendement_total": -0.19240243397308754,
+   "max_drawdown": -0.2633494536567487,
+   "sharpe": -0.81886477286403,
+   "n_ordres": 29
+  },
+  {
+   "parametre": "Plafond d'exposition",
+   "valeur": "100 %",
+   "valeur_finale": 8380.325992836926,
+   "rendement_total": -0.16196740071630733,
+   "max_drawdown": -0.2995028270639357,
+   "sharpe": -0.36723912411386495,
+   "n_ordres": 12
+  },
+  {
+   "parametre": "Frais par ordre",
+   "valeur": "0,10 %",
+   "valeur_finale": 8315.080574150896,
+   "rendement_total": -0.1684919425849104,
+   "max_drawdown": -0.28343098675260386,
+   "sharpe": -0.5117420142129623,
+   "n_ordres": 16
+  },
+  {
+   "parametre": "Frais par ordre",
+   "valeur": "0,50 %",
+   "valeur_finale": 8003.5118572688225,
+   "rendement_total": -0.19964881427311776,
+   "max_drawdown": -0.30389297804095483,
+   "sharpe": -0.6421381079809552,
+   "n_ordres": 14
+  },
+  {
+   "parametre": "Seuil d'achat",
+   "valeur": "0,30 %",
+   "valeur_finale": 8296.253434064569,
+   "rendement_total": -0.17037465659354312,
+   "max_drawdown": -0.29674213913839387,
+   "sharpe": -0.5105495526471072,
+   "n_ordres": 17
+  },
+  {
+   "parametre": "Seuil d'achat",
+   "valeur": "1,50 %",
+   "valeur_finale": 7997.110281099151,
+   "rendement_total": -0.200288971890085,
+   "max_drawdown": -0.2970822202847323,
+   "sharpe": -0.5130934390805945,
+   "n_ordres": 16
+  }
+ ],
+ "blockchain": {
+  "valide": true,
+  "message": "chaîne valide (2055 blocs)",
+  "n_blocs": 2055
+ },
+ "configuration": {
+  "capital_initial": 10000.0,
+  "frais": 0.0026,
+  "glissement": 0.0005,
+  "plafond_exposition": 0.8,
+  "stop_loss": 0.1,
+  "coupe_circuit": 0.85,
+  "taille_min": 50.0,
+  "seuil_achat": 0.0062,
+  "seuil_vente": -0.0055771907604090015,
+  "confiance": 0.5,
+  "horizon_jours": 5
+ }
+}

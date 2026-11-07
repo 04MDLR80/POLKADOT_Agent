@@ -1,0 +1,238 @@
+<title>Agents DOT/USD</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* Layout : bandeau d'état + grille de tuiles stratégie, puis graphiques et journaux en sections pleine largeur */
+:root{
+  --bg:#f6f5f9; --surface:#ffffff; --fg:#1d1a26; --muted:#6b6679; --line:#e3e0ea;
+  --accent:#d6286f; --c2:#3f6fd8; --c3:#8a8597;
+  --good:#1f8a4c; --bad:#c2392b; --warn:#b7791f;
+  --display:"Archivo",system-ui,sans-serif; --body:"Archivo",system-ui,sans-serif; --mono:"JetBrains Mono",ui-monospace,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#15131b; --surface:#1e1b26; --fg:#ece9f2; --muted:#9d97ab; --line:#2f2b3a;
+  --accent:#ff5c9a; --c2:#7c9cf0; --c3:#8f899e; --good:#4cc47e; --bad:#ef6b5c; --warn:#e0a94a; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#15131b; --surface:#1e1b26; --fg:#ece9f2; --muted:#9d97ab; --line:#2f2b3a;
+  --accent:#ff5c9a; --c2:#7c9cf0; --c3:#8f899e; --good:#4cc47e; --bad:#ef6b5c; --warn:#e0a94a; color-scheme:dark}
+body{background:var(--bg);color:var(--fg);font-family:var(--body);font-size:15px;line-height:1.5}
+.wrap{max-width:1120px;margin:0 auto;padding-block:28px 56px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:grid;gap:28px}
+header{display:grid;gap:6px}
+.eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--accent)}
+h1{font-family:var(--display);font-weight:700;font-size:clamp(26px,4vw,36px);margin:0;text-wrap:balance;letter-spacing:-.01em}
+h2{font-family:var(--display);font-weight:600;font-size:18px;margin:0}
+.sub{color:var(--muted);max-width:70ch;margin:0}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:6px}
+.chip{font-family:var(--mono);font-size:12px;padding:4px 10px;border:1px solid var(--line);border-radius:999px;background:var(--surface);color:var(--muted)}
+.chip b{color:var(--fg);font-weight:500}
+.chip.ok{border-color:var(--good);color:var(--good)}
+.chip.warn{border-color:var(--warn);color:var(--warn)}
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:14px}
+.tile{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:16px 18px;display:grid;gap:10px;min-width:0}
+.tile.main{border-color:var(--accent)}
+.tile .name{display:flex;align-items:center;gap:8px;font-weight:600}
+.dot{width:10px;height:10px;border-radius:50%;flex:none}
+.big{font-family:var(--mono);font-size:26px;font-variant-numeric:tabular-nums;letter-spacing:-.02em}
+.pos{color:var(--good)} .neg{color:var(--bad)}
+dl{display:grid;grid-template-columns:1fr auto;gap:4px 12px;margin:0;font-size:13px}
+dt{color:var(--muted)} dd{margin:0;font-family:var(--mono);font-variant-numeric:tabular-nums;text-align:right}
+section{display:grid;gap:12px;min-width:0}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:16px;min-width:0}
+.chartbox{position:relative;height:300px}
+.two{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:14px}
+.note{font-size:13px;color:var(--muted);margin:0;max-width:75ch}
+.scroll{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:13px;font-variant-numeric:tabular-nums}
+th{text-align:left;font-weight:600;color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.05em;padding:8px 10px;border-bottom:1px solid var(--line);white-space:nowrap}
+td{padding:7px 10px;border-bottom:1px solid var(--line);white-space:nowrap}
+td.mono,.mono{font-family:var(--mono)}
+.pill{display:inline-block;padding:1px 8px;border-radius:999px;font-size:11px;font-weight:600;border:1px solid currentColor}
+.p-buy{color:var(--good)} .p-sell{color:var(--bad)} .p-none{color:var(--muted)}
+.hash{font-family:var(--mono);font-size:12px;color:var(--muted)}
+.callout{border-left:3px solid var(--warn);padding:10px 14px;background:var(--surface);border-radius:0 8px 8px 0;font-size:14px}
+.callout b{color:var(--warn)}
+details summary{cursor:pointer;font-weight:600}
+details summary:focus-visible,button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+</style>
+
+<div class="wrap">
+  <header>
+    <div class="eyebrow">Projet Deep Learning GSTR S3 · simulation virtuelle</div>
+    <h1>Agents autonomes sur DOT/USD</h1>
+    <p class="sub" id="sub"></p>
+    <div class="chips" id="chips"></div>
+  </header>
+
+  <div class="callout" id="callout"></div>
+
+  <section>
+    <h2>Stratégies sur la période de test</h2>
+    <div class="tiles" id="tiles"></div>
+  </section>
+
+  <section>
+    <h2>Valeur du portefeuille</h2>
+    <div class="panel"><div class="chartbox"><div id="eq" style="height:100%"></div></div></div>
+  </section>
+
+  <div class="two">
+    <section>
+      <h2>Prix DOT/USD (échelle log) et découpage</h2>
+      <div class="panel"><div class="chartbox"><div id="px" style="height:100%"></div></div></div>
+    </section>
+    <section>
+      <h2 id="fch">Rendement prévu vs réel</h2>
+      <div class="panel"><div class="chartbox"><div id="fc" style="height:100%"></div></div></div>
+    </section>
+  </div>
+
+  <section>
+    <h2>Qualité des prévisions</h2>
+    <div class="panel scroll"><table id="fct"></table></div>
+    <p class="note">MAE et RMSE en rendement logarithmique sur l'horizon de prévision. « Direction » = part des jours où le signe prévu est le bon. Le modèle doit battre les références naïves pour apporter une information exploitable.</p>
+  </section>
+
+  <section>
+    <h2>Ordres exécutés par les agents</h2>
+    <p class="note" id="txn"></p>
+    <div class="panel scroll"><table id="tx"></table></div>
+  </section>
+
+  <section>
+    <h2>Registre blockchain</h2>
+    <p class="note" id="bcn"></p>
+    <div class="panel scroll"><table id="bc"></table></div>
+    <p class="note">Chaque bloc contient le hash SHA-256 du bloc précédent et une preuve de travail (hash commençant par 000). La vérification se fait avec <span class="mono">python3 verify_chain.py outputs/ledger.json</span> ; toute modification d'un bloc rend la chaîne invalide.</p>
+  </section>
+
+  <section>
+    <details class="panel"><summary id="lcs">Courbes d'apprentissage</summary>
+      <div class="chartbox" style="margin-top:12px"><div id="lc" style="height:100%"></div></div>
+    </details>
+  </section>
+</div>
+
+<script>
+const R = /*__DATA__*/null;
+const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+const S = R.summary;
+const pct = (x,d=2) => x==null||isNaN(x) ? "–" : (x*100).toFixed(d).replace(".",",")+" %";
+const num = (x,d=2) => x==null||isNaN(x) ? "–" : x.toLocaleString("fr-FR",{minimumFractionDigits:d,maximumFractionDigits:d});
+const usd = x => (x>=0?"+":"−")+num(Math.abs(x))+" $";
+const MOD = S.modele_agents || "GRU", AGN = "Agents " + MOD;
+const COLORS = () => ({[AGN]:"var(--accent)","Règle technique (MM20)":"var(--c2)","Buy and Hold":"var(--c3)"});
+
+const D = S.donnees;
+document.getElementById("sub").textContent =
+  `Ensemble de ${R.apprentissage.length} ${MOD} (fenêtre ${D.fenetre} j, ${S.retenu.n_hid} unités) prévoyant le rendement à ${D.horizon||1} jours → agent stratégie (achat au-dessus de ${pct(S.configuration.seuil_achat)}, vente sous ${pct(S.configuration.seuil_vente)}) → agent risque → agent exécution. Capital virtuel ${num(S.configuration.capital_initial,0)} $, frais ${pct(S.configuration.frais)} + glissement ${pct(S.configuration.glissement)} par ordre.`;
+const testDates = R.courbes[AGN].dates;
+document.getElementById("lcs").textContent = `Courbes d'apprentissage (ensemble de ${MOD})`;
+document.getElementById("chips").innerHTML = [
+  `Données <b>${D.debut} → ${D.fin}</b> (${D.n_jours} j)`,
+  `Train / val / test <b>${D.n_train} / ${D.n_val} / ${D.n_test}</b>`,
+  `Test <b>${testDates[0]} → ${testDates[testDates.length-1]}</b>`,
+  `<span>Blockchain : ${S.blockchain.n_blocs} blocs, ${S.blockchain.valide?"valide":"INVALIDE"}</span>`
+].map((h,i)=>`<span class="chip${i==3?(S.blockchain.valide?" ok":" warn"):""}">${h}</span>`).join("");
+
+const gru = S.prevision.test[MOD], nz = [S.prevision.test.Naif_zero, S.prevision.test.Naif_moyenne_train].sort((a,b)=>a.RMSE-b.RMSE)[0];
+const beats = gru.RMSE < nz.RMSE;
+document.getElementById("callout").innerHTML = D.n_jours < 300
+  ? `<b>Historique trop court.</b> ${D.n_jours} jours seulement, soit ${D.n_test} décisions en test : les écarts de profit entre stratégies ne sont pas significatifs. ${beats?"":"Sur ce test, le modèle fait moins bien que la prévision naïve « rendement nul » (RMSE "+num(gru.RMSE,4)+" contre "+num(nz.RMSE,4)+"). "}Relancer le pipeline sur plusieurs années de données DOT/USD.`
+  : `<b>Lecture.</b> ${beats?`Le ${MOD} bat la meilleure prévision naïve sur le test`:`Le ${MOD} ne bat pas la meilleure prévision naïve sur le test`} (RMSE ${num(gru.RMSE,4)} contre ${num(nz.RMSE,4)}). Aucune rentabilité n'est garantie hors échantillon.`;
+
+const C = COLORS();
+document.getElementById("tiles").innerHTML = S.strategies.map(m=>`
+  <div class="tile${m.strategie==AGN?" main":""}">
+    <div class="name"><span class="dot" style="background:${C[m.strategie]}"></span>${m.strategie}</div>
+    <div class="big ${m.profit_net>=0?"pos":"neg"}">${usd(m.profit_net)}</div>
+    <dl>
+      <dt>Rendement total</dt><dd>${pct(m.rendement_total)}</dd>
+      <dt>Rendement annualisé</dt><dd>${m.n_jours<60?"n.s.":pct(m.rendement_annualise,1)}</dd>
+      <dt>Max drawdown</dt><dd>${pct(m.max_drawdown)}</dd>
+      <dt>Sharpe (annualisé)</dt><dd>${m.n_jours<60?"n.s.":num(m.sharpe)}</dd>
+      <dt>Ordres / trades clôturés</dt><dd>${m.n_ordres} / ${m.n_trades_clotures}</dd>
+      <dt>Taux de réussite</dt><dd>${m.taux_reussite==null?"–":pct(m.taux_reussite,0)}</dd>
+      <dt>Frais payés</dt><dd>${num(m.frais_totaux)} $</dd>
+    </dl>
+  </div>`).join("");
+
+const ft = S.prevision;
+const rows = [];
+for (const s of ["train","validation","test"]) for (const k of ["LSTM","GRU","Naif_zero","Naif_moyenne_train"]) if (ft[s][k]) rows.push([s,k,ft[s][k]]);
+const lbl = {GRU:"GRU (ensemble de 5)",LSTM:"LSTM (ensemble de 5)",Naif_zero:"Naïf : rendement nul",Naif_moyenne_train:"Naïf : moyenne du train"};
+document.getElementById("fct").innerHTML = "<tr><th>Ensemble</th><th>Modèle</th><th>MAE</th><th>RMSE</th><th>Direction</th></tr>" +
+  rows.map(([s,k,v])=>`<tr><td>${s}</td><td>${lbl[k]}</td><td class="mono">${num(v.MAE,4)}</td><td class="mono">${num(v.RMSE,4)}</td><td class="mono">${k=="Naif_zero"?"–":pct(v.direction,0)}</td></tr>`).join("");
+
+const pillOf = a => a=="ACHETER"||a=="ACHAT" ? "p-buy" : a=="VENDRE"||a=="VENTE" ? "p-sell" : "p-none";
+const TX=R.transactions.filter(t=>t.action!="RIEN");
+document.getElementById("fch").textContent=`Rendement à ${D.horizon||1} jours : prévu vs réel (test)`;
+document.getElementById("txn").textContent=`${TX.length} ordres sur ${R.transactions.length} jours de décision ; les autres jours, l'agent risque n'a rien exécuté (conservation ou aucune position).`;
+document.getElementById("tx").innerHTML = "<tr><th>Décision</th><th>Exécution</th><th>Prévu</th><th>Signal</th><th>Agent risque</th><th>Prix</th><th>Quantité</th><th>Frais</th><th>Valeur après</th><th>Raison</th></tr>" +
+  TX.map(t=>`<tr><td class="mono">${t.date_decision}</td><td class="mono">${t.date_execution}</td><td class="mono">${t.mu==null?"–":pct(t.mu)}</td>
+  <td><span class="pill ${pillOf(t.signal)}">${t.signal}</span></td><td><span class="pill ${pillOf(t.action)}">${t.action}</span></td>
+  <td class="mono">${t.fill==null?"–":num(t.fill,4)}</td><td class="mono">${t.qty?num(t.qty,2):"–"}</td><td class="mono">${num(t.fee)}</td>
+  <td class="mono">${num(t.v_after)} $</td><td>${t.reason}</td></tr>`).join("");
+
+const short = h => h.slice(0,10)+"…"+h.slice(-6);
+const summ = b => { const d=b.data;
+  if (b.agent=="AGENT_1_PREVISION") return `prévu ${pct(d.rendement_prevu_horizon??d.rendement_prevu_J1)} ± ${pct(d.dispersion_ensemble)}`;
+  if (b.agent=="AGENT_2_STRATEGIE") return `signal ${d.signal}`;
+  if (b.agent=="AGENT_3_RISQUE") return `${d.decision} · ${d.raison}`;
+  if (b.agent=="AGENT_4_EXECUTION") return `${d.action_simulee}${d.prix_execution?" à "+num(d.prix_execution,4):""} · ${num(d.valeur_portefeuille_avant)} → ${num(d.valeur_portefeuille_apres)} $`;
+  if (d.note) return d.note;
+  if (d.actif) return `${d.actif} · ${d.modele}`;
+  if (d.resultats) return "résultats finaux enregistrés";
+  return JSON.stringify(d).slice(0,80); };
+const tradeDays=new Set(TX.map(t=>t.date_decision)), execDays=new Set(TX.map(t=>t.date_execution));
+const BL=R.ledger.filter(b=>b.sim_time=="-"||(b.agent=="AGENT_4_EXECUTION"?execDays.has(b.sim_time)&&b.data.action_simulee!="RIEN":tradeDays.has(b.sim_time)));
+document.getElementById("bcn").textContent=`${R.ledger.length} blocs au total. Affichés : les blocs système et les ${BL.length-3} blocs des jours où un ordre a été exécuté. Le registre complet est dans outputs/ledger.json.`;
+document.getElementById("bc").innerHTML = "<tr><th>#</th><th>Date sim.</th><th>Agent</th><th>Événement</th><th>Nonce</th><th>Hash précédent</th><th>Hash</th></tr>" +
+  BL.map(b=>`<tr><td class="mono">${b.index}</td><td class="mono">${b.sim_time}</td><td>${b.agent.replace(/_/g," ")}</td><td>${summ(b)}</td>
+  <td class="mono">${b.nonce}</td><td class="hash">${short(b.prev_hash)}</td><td class="hash">${short(b.hash)}</td></tr>`).join("");
+
+function lineChart(id, labels, series, opt={}){
+  const el=document.getElementById(id), W=el.clientWidth||600, H=el.clientHeight||300;
+  const m={l:58,r:26,t:30,b:28}, w=W-m.l-m.r, h=H-m.t-m.b;
+  const vals=series.flatMap(s=>s.data.filter(v=>v!=null));
+  let lo=Math.min(...vals), hi=Math.max(...vals); if(opt.zero){lo=Math.min(lo,0);hi=Math.max(hi,0);}
+  const pad=(hi-lo)*0.08||1; lo-=pad; hi+=pad;
+  const step=(()=>{const r=(hi-lo)/4,p=10**Math.floor(Math.log10(r)),f=r/p;return (f<1.5?1:f<3?2:f<7?5:10)*p;})();
+  const ticks=[];for(let v=Math.ceil(lo/step)*step;v<=hi+1e-12;v+=step)ticks.push(v);
+  const n=labels.length, X=i=>m.l+(n<2?w/2:i*w/(n-1)), Y=v=>m.t+(hi-v)/(hi-lo)*h;
+  const fmt=opt.fmt||(v=>num(v,2));
+  const span=(Date.parse(labels[n-1])-Date.parse(labels[0]))/864e5, lab=l=>String(l).trim().length==10&&span>200?String(l).slice(0,7):String(l).slice(5);
+  let s=`<svg viewBox="0 0 ${W} ${H}" width="100%" height="100%" role="img" style="font-family:var(--mono);font-size:11px">`;
+  ticks.forEach(v=>{s+=`<line x1="${m.l}" x2="${W-m.r}" y1="${Y(v)}" y2="${Y(v)}" stroke="var(--line)"/><text x="${m.l-6}" y="${Y(v)+4}" text-anchor="end" fill="var(--muted)">${fmt(v)}</text>`;});
+  if(opt.zero) s+=`<line x1="${m.l}" x2="${W-m.r}" y1="${Y(0)}" y2="${Y(0)}" stroke="var(--muted)" stroke-dasharray="3 3"/>`;
+  const k=Math.max(1,Math.ceil(n/Math.max(2,Math.floor(w/90))));
+  labels.forEach((l,i)=>{if(i%k==0||i==n-1&&(n-1)%k>k/2)s+=`<text x="${X(i)}" y="${H-8}" text-anchor="middle" fill="var(--muted)">${lab(l)}</text>`;});
+  series.forEach(se=>{
+    if(se.line!==false){let d="",on=false;se.data.forEach((v,i)=>{if(v==null){on=false;return;}d+=(on?"L":"M")+X(i).toFixed(1)+","+Y(v).toFixed(1);on=true;});
+      s+=`<path d="${d}" fill="none" stroke="${se.color}" stroke-width="${se.width||2}" stroke-linejoin="round"/>`;}
+    if(se.dots) se.data.forEach((v,i)=>{if(v!=null)s+=`<circle cx="${X(i)}" cy="${Y(v)}" r="${se.dots}" fill="${se.color}"><title>${labels[i]} : ${fmt(v)}</title></circle>`;});
+    const li=se.data.map((v,i)=>v==null?-1:i).filter(i=>i>=0).pop();
+    if(se.end&&li!=null) s+=`<circle cx="${X(li)}" cy="${Y(se.data[li])}" r="4" fill="${se.color}" stroke="var(--surface)" stroke-width="2"/>`;
+  });
+  let lx=m.l; series.forEach(se=>{s+=`<rect x="${lx}" y="8" width="10" height="10" rx="2" fill="${se.color}"/><text x="${lx+14}" y="17" fill="var(--fg)" style="font-family:var(--body);font-size:12px">${se.label}</text>`;lx+=se.label.length*6.6+34;});
+  el.innerHTML=s+"</svg>";
+}
+function charts(){
+  const C=COLORS();
+  lineChart("eq",R.courbes[AGN].dates,Object.entries(R.courbes).map(([k,v])=>({label:k,data:v.valeur,color:C[k],width:k==AGN?3:2,dots:0,end:true})),{fmt:v=>num(v,0)});
+  const sp=R.previsions, split={}; sp.dates.forEach((d,i)=>split[d]=sp.ensemble[i]);
+  const lg=R.prix.close.map(c=>Math.log10(c));
+  const pxSet=s=>lg.map((c,i)=>split[R.prix.dates[i]]==s?c:null);
+  lineChart("px",R.prix.dates,[{label:"Train",data:pxSet("train"),color:"var(--c3)",width:1.5},
+    {label:"Validation",data:pxSet("val"),color:"var(--c2)",width:1.5},
+    {label:"Test",data:pxSet("test"),color:"var(--accent)",width:1.5}],{fmt:v=>num(10**v,v<0?2:1)+" $"});
+  const ti=sp.ensemble.map((e,i)=>e=="test"?i:-1).filter(i=>i>=0);
+  lineChart("fc",ti.map(i=>sp.dates[i]),[{label:"Réel",data:ti.map(i=>sp.reel[i]),color:"var(--c3)",width:1},{label:`Prévu (${MOD})`,data:ti.map(i=>sp.prevu[i]),color:"var(--accent)",width:2}],{fmt:v=>pct(v,0),zero:true});
+  const L=R.apprentissage, mx=Math.max(...L.map(h=>h.train.length)), padTo=a=>[...a,...Array(mx-a.length).fill(null)];
+  const mean=key=>[...Array(mx).keys()].map(i=>{const v=L.map(h=>h[key][i]).filter(x=>x!=null);return v.length?v.reduce((a,b)=>a+b)/v.length:null;});
+  lineChart("lc",[...Array(mx).keys()].map(i=>"     "+(i+1)),[{label:"Perte train (moyenne)",data:mean("train"),color:"var(--c3)"},{label:"Perte validation (moyenne)",data:mean("val"),color:"var(--accent)"}],{fmt:v=>num(v,2)});
+}
+charts();
+let rt;addEventListener('resize',()=>{clearTimeout(rt);rt=setTimeout(charts,150);});
+document.querySelector('details').addEventListener('toggle',charts);
+</script>
