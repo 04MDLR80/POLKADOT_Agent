@@ -1,0 +1,34 @@
+name: Agents autonomes DOT/USD
+
+on:
+  schedule:
+    - cron: "5 0,4,8,12,16,20 * * *"   # 00:05 UTC = juste après la clôture quotidienne, puis valorisation toutes les 4 h
+  workflow_dispatch:                    # lancement manuel depuis l'onglet Actions
+
+permissions:
+  contents: write
+
+concurrency:
+  group: trade
+  cancel-in-progress: false
+
+jobs:
+  trade:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: pip install numpy pandas
+      - name: Passage des agents (paper trading)
+        run: python trade_daily.py
+      - name: Enregistrer l'état (déclenche la mise à jour du tableau de bord)
+        run: |
+          git config user.name "agents-bot"
+          git config user.email "agents-bot@users.noreply.github.com"
+          git add live/
+          git diff --cached --quiet || git commit -m "Agents : état du $(date -u +'%Y-%m-%d %H:%M') UTC"
+          git pull --rebase origin main
+          git push

@@ -85,3 +85,10 @@ streamlit run streamlit_app.py
 
 Onglets : Direct (prix Kraken en temps réel, ou rejeu accéléré), Résultats du test, Prévisions, Transactions,
 Blockchain (vérification + téléchargement de `ledger.json`), Données & modèle.
+
+## Agents autonomes (GitHub Actions)
+
+`.github/workflows/trade.yml` lance `trade_daily.py` à 00:05 UTC (juste après la clôture quotidienne) puis toutes
+les 4 h : prix Kraken, décision des 4 agents sur toute nouvelle bougie clôturée, ordre **simulé**, blocs ajoutés au
+registre. L'état (`live/`) est commité ; Streamlit se met à jour à chaque commit. Lancement manuel : onglet Actions →
+« Agents autonomes DOT/USD » → Run workflow.

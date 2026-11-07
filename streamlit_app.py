@@ -3,9 +3,8 @@
     pip install -r requirements.txt
     streamlit run streamlit_app.py
 
-Onglets : Direct (prix Kraken en temps réel) · Résultats du test · Prévisions · Transactions ·
-Blockchain · Données & modèle.  Le direct tourne dans un thread en arrière-plan ; l'état est
-sauvegardé dans live/ et repris au redémarrage.
+Onglets : Direct (agents autonomes, prix Kraken) · Résultats du test · Prévisions · Transactions ·
+Blockchain · Données & modèle.  Le mode autonome lit l'état que GitHub Actions écrit dans live/ (trade_daily.py).
 """
 import json
 import os
@@ -64,35 +63,34 @@ t_live, t_res, t_prev, t_tx, t_bc, t_data = st.tabs(
 
 # ------------------------------------------------------------------ DIRECT
 with t_live:
-    mode = st.radio("Mode", ["direct", "rejeu"], horizontal=True,
-                    format_func=lambda m: "Direct (prix réels Kraken)" if m == "direct" else "Rejeu accéléré du test")
+    mode = st.radio("Mode", ["auto", "rejeu"], horizontal=True,
+                    format_func=lambda m: "Autonome (GitHub Actions, prix réels Kraken)" if m == "auto"
+                    else "Rejeu accéléré du test")
     vitesse = st.slider("Rejeu : secondes par jour", 0.1, 3.0, 0.5, 0.1) if mode == "rejeu" else 0.5
 
     @st.cache_resource
-    def demarrer(mode, vitesse):
+    def demarrer_rejeu(vitesse):
         import live_agent as la
-        sim = la.Simulateur(la.Modele(), mode)
-        stop = threading.Event()
-        if mode == "rejeu":
-            th = threading.Thread(target=la.boucle_rejeu, args=(sim, stop, vitesse), daemon=True)
-        else:
-            th = threading.Thread(target=la.boucle_direct, args=(sim, stop), daemon=True)
+        sim = la.Simulateur(la.Modele(), "rejeu")
+        th = threading.Thread(target=la.boucle_rejeu, args=(sim, threading.Event(), vitesse), daemon=True)
         th.start()
         return sim
 
-    sim = demarrer(mode, vitesse)
-    if mode == "direct":
-        if st.button("Repartir de 10 000 $"):
-            import live_agent as la
-            for f in (sim.fichier, sim.fichier_reg):
-                if os.path.exists(f):
-                    os.remove(f)
-            sim._nouveau()
-            sim.derniere_bougie = None
-            st.rerun()
+    def obtenir_sim():
+        import live_agent as la
+        if mode == "rejeu":
+            return demarrer_rejeu(vitesse)
+        if not os.path.exists(os.path.join(ICI, "live", "etat_direct.json")):
+            return None
+        return la.Simulateur(la.Modele(), "direct")   # relit l'état écrit par GitHub Actions
 
     @st.fragment(run_every=5)
     def affichage():
+        sim = obtenir_sim()
+        if sim is None:
+            st.info("Les agents n'ont pas encore tourné. Premier passage : onglet Actions du dépôt GitHub → "
+                    "« Agents autonomes DOT/USD » → Run workflow (puis automatiquement toutes les 4 h).")
+            return
         v = sim.vue()
         if v["erreur"]:
             st.warning(f"{v['statut']} — {v['erreur']}")
