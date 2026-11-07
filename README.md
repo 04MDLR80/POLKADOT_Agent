@@ -75,3 +75,13 @@ Sous Windows : double-cliquer sur `lancer_direct.bat` ou `lancer_rejeu.bat`.
   au premier lancement, ils décident tout de suite sur la dernière clôture.
 - Chaque décision ajoute 4 blocs au registre `live/registre_direct.json`, vérifié à chaque mise à jour.
 - L'état est sauvegardé dans `live/` : après un arrêt (Ctrl+C), le prochain lancement reprend là où il s'était arrêté.
+
+## Tableau de bord Streamlit
+
+```bash
+pip install -r requirements.txt
+streamlit run streamlit_app.py
+```
+
+Onglets : Direct (prix Kraken en temps réel, ou rejeu accéléré), Résultats du test, Prévisions, Transactions,
+Blockchain (vérification + téléchargement de `ledger.json`), Données & modèle.
