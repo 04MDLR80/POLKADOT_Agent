@@ -1,0 +1,111 @@
+{
+ "difficulty": 3,
+ "chain": [
+  {
+   "index": 0,
+   "sim_time": "-",
+   "utc_time": "2026-11-07T01:31:58+00:00",
+   "agent": "GENESIS",
+   "data": {
+    "note": "Registre du projet Deep Learning - DOT/USD (simulation, aucune transaction réelle)"
+   },
+   "prev_hash": "0000000000000000000000000000000000000000000000000000000000000000",
+   "nonce": 37,
+   "hash": "00001d4be67a0cd086cc8ac50766708081410fe285d6b3d695dc4a829c11ce85"
+  },
+  {
+   "index": 1,
+   "sim_time": "-",
+   "utc_time": "2026-11-07T01:31:58+00:00",
+   "agent": "SYSTEME",
+   "data": {
+    "mode": "direct",
+    "actif": "DOT/USD",
+    "source": "Kraken (API publique)",
+    "modele": "ensemble de 5 LSTM (fenêtre 20 j, horizon 5 j)",
+    "configuration": {
+     "capital_initial": 10000.0,
+     "frais": 0.0026,
+     "glissement": 0.0005,
+     "plafond_exposition": 0.8,
+     "stop_loss": 0.1,
+     "coupe_circuit": 0.85,
+     "taille_min": 50.0,
+     "seuil_achat": 0.0062,
+     "seuil_vente": -0.0055771907604090015,
+     "confiance": 0.5,
+     "horizon_jours": 5
+    },
+    "avertissement": "simulation : aucun ordre réel"
+   },
+   "prev_hash": "00001d4be67a0cd086cc8ac50766708081410fe285d6b3d695dc4a829c11ce85",
+   "nonce": 2103,
+   "hash": "000792070574f8e347ba683b5a6828514dc517b49fd9b904ae875b2246bfa4bd"
+  },
+  {
+   "index": 2,
+   "sim_time": "2026-11-06",
+   "utc_time": "2026-11-07T01:31:59+00:00",
+   "agent": "AGENT_1_PREVISION",
+   "data": {
+    "decision_sur_cloture": "2026-11-06",
+    "cloture": 0.9119,
+    "horizon_jours": 5,
+    "rendement_prevu_horizon": -0.009339,
+    "dispersion_ensemble": 0.010639
+   },
+   "prev_hash": "000792070574f8e347ba683b5a6828514dc517b49fd9b904ae875b2246bfa4bd",
+   "nonce": 5826,
+   "hash": "00071d9bf3ec3375bd823c36e86fb8587d2724fe8b336c8ad7bddc3ffe3f267c"
+  },
+  {
+   "index": 3,
+   "sim_time": "2026-11-06",
+   "utc_time": "2026-11-07T01:31:59+00:00",
+   "agent": "AGENT_2_STRATEGIE",
+   "data": {
+    "signal": "CONSERVATION",
+    "seuil_achat": 0.0062,
+    "seuil_vente": -0.0055771907604090015
+   },
+   "prev_hash": "00071d9bf3ec3375bd823c36e86fb8587d2724fe8b336c8ad7bddc3ffe3f267c",
+   "nonce": 8656,
+   "hash": "000eb4853bb343328b5fc509d5059a6a50e4c71b7c7338d1277f0ed7bf53f2ce"
+  },
+  {
+   "index": 4,
+   "sim_time": "2026-11-06",
+   "utc_time": "2026-11-07T01:31:59+00:00",
+   "agent": "AGENT_3_RISQUE",
+   "data": {
+    "decision": "RIEN",
+    "quantite": 0.0,
+    "raison": "conservation",
+    "plafond": 0.8,
+    "stop_loss": 0.1
+   },
+   "prev_hash": "000eb4853bb343328b5fc509d5059a6a50e4c71b7c7338d1277f0ed7bf53f2ce",
+   "nonce": 5250,
+   "hash": "000d50e53488042de200bab58524a75999147da000f4eb6ed9082c29cacdd4be"
+  },
+  {
+   "index": 5,
+   "sim_time": "2026-11-07",
+   "utc_time": "2026-11-07T01:31:59+00:00",
+   "agent": "AGENT_4_EXECUTION",
+   "data": {
+    "action_simulee": "RIEN",
+    "quantite": 0.0,
+    "prix_execution": null,
+    "frais": 0.0,
+    "valeur_portefeuille_avant": 10000.0,
+    "valeur_portefeuille_apres": 10000.0,
+    "tresorerie": 10000.0,
+    "unites_DOT": 0.0
+   },
+   "prev_hash": "000d50e53488042de200bab58524a75999147da000f4eb6ed9082c29cacdd4be",
+   "nonce": 499,
+   "hash": "000b9affbe59ab93d90357fa333c2d8c0c8d1de088b4667306af719ec0079067"
+  }
+ ]
+}
