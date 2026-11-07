@@ -28,7 +28,7 @@ SERIES = {  # palette validée (écart CVD >= 10, contraste >= 3:1) ; une couleu
     "Réel": "#2F6FB5", "LSTM": ACCENT, "GRU": "#7A5CCF", "train": "#2F6FB5", "validation": ACCENT,
 }
 
-st.set_page_config(page_title="Agents DOT/USD", page_icon="📈", layout="wide", initial_sidebar_state="collapsed")
+st.set_page_config(page_title="Agents DOT/USD", page_icon="📈", layout="wide", initial_sidebar_state="expanded")
 
 st.markdown(f"""
 <style>
@@ -78,10 +78,24 @@ h3 {{ font-size: 1.05rem !important; font-weight: 650 !important; margin: 1.6rem
 .gauge .m {{ position:absolute; top:-5px; width:3px; height:20px; background:{INK}; border-radius:2px; transform:translateX(-50%); }}
 .gauge-l {{ display:flex; justify-content:space-between; font-size:.74rem; color:{MUTED}; }}
 
-/* onglets */
-button[data-baseweb="tab"] {{ font-weight:600; font-size:.95rem; padding:.7rem 1rem; }}
-[data-baseweb="tab-highlight"] {{ background:{ACCENT} !important; height:3px !important; }}
-[data-baseweb="tab-border"] {{ background:{LINE} !important; }}
+
+/* barre latérale */
+[data-testid="stSidebar"] {{ background:{SURF}; border-right:1px solid {LINE}; }}
+[data-testid="stSidebar"] > div:first-child {{ padding-top:.6rem; }}
+.brand {{ display:flex; gap:.7rem; align-items:center; padding:.4rem .4rem 1.2rem; }}
+.brand .logo {{ width:36px; height:36px; border-radius:10px; background:{ACCENT}; color:#fff; display:flex; align-items:center;
+               justify-content:center; font-size:1.15rem; }}
+.brand b {{ display:block; font-size:1rem; color:{INK}; line-height:1.2; }}
+.brand span {{ font-size:.78rem; color:{SLATE}; }}
+.st-key-nav div[role="radiogroup"] {{ gap:.15rem; }}
+.st-key-nav label {{ width:100%; padding:.55rem .8rem; border-radius:8px; cursor:pointer; margin:0; }}
+.st-key-nav label > div:first-child {{ display:none; }}
+.st-key-nav label p {{ font-weight:600; font-size:.95rem; color:{SLATE}; }}
+.st-key-nav label:hover {{ background:#F1F3F6; }}
+.st-key-nav label:has(input:checked) {{ background:#FDE8F3; }}
+.st-key-nav label:has(input:checked) p {{ color:{ACCENT}; }}
+.side-t {{ font-size:.78rem; font-weight:650; color:{SLATE}; margin:1.6rem 0 .35rem; }}
+.side-foot {{ margin-top:2.2rem; padding-top:1rem; border-top:1px solid {LINE}; font-size:.78rem; color:{MUTED}; line-height:1.6; }}
 [data-testid="stDataFrame"] {{ border:1px solid {LINE}; border-radius:10px; overflow:hidden; }}
 .note {{ border-left:3px solid {ACCENT}; background:{SURF}; padding:.7rem 1rem; color:{SLATE}; font-size:.9rem; border-radius:0 8px 8px 0; margin:.8rem 0; }}
 </style>
@@ -170,14 +184,23 @@ st.markdown(f"""
   <div class="pill"><span>Projet Deep Learning GSTR S3</span></div>
 </div>""", unsafe_allow_html=True)
 
-t_live, t_res, t_prev, t_tx, t_bc, t_mod = st.tabs(["Direct", "Résultats", "Prévisions", "Transactions", "Registre", "Modèle"])
+PAGES = ["Direct", "Résultats", "Prévisions", "Transactions", "Registre", "Modèle"]
+with st.sidebar:
+    st.markdown('<div class="brand"><div class="logo">◉</div><div><b>Agents DOT/USD</b><span>Deep Learning GSTR S3</span></div></div>',
+                unsafe_allow_html=True)
+    page = st.radio("Navigation", PAGES, key="nav", label_visibility="collapsed")
+    mode, vitesse = "auto", 0.5
+    if page == "Direct":
+        st.markdown('<div class="side-t">Source des données</div>', unsafe_allow_html=True)
+        mode = st.selectbox("Source", ["auto", "rejeu"], label_visibility="collapsed",
+                            format_func=lambda m: "Agents autonomes (Kraken)" if m == "auto" else "Rejeu accéléré du test")
+        if mode == "rejeu":
+            vitesse = st.slider("Secondes par jour", 0.1, 3.0, 0.5, 0.1)
+    st.markdown(f'<div class="side-foot">Données {d["debut"]} → {d["fin"]}<br>Modèle {met["modele_agents"]} · horizon {d["horizon"]} j<br>'
+                'Simulation : aucun ordre réel</div>', unsafe_allow_html=True)
 
 # ------------------------------------------------------------------ DIRECT
-with t_live:
-    mode = st.radio("Source", ["auto", "rejeu"], horizontal=True, label_visibility="collapsed",
-                    format_func=lambda m: "Direct · agents autonomes (prix Kraken)" if m == "auto" else "Rejeu accéléré du test")
-    vitesse = st.slider("Secondes par jour de rejeu", 0.1, 3.0, 0.5, 0.1) if mode == "rejeu" else 0.5
-
+if page == "Direct":
     @st.cache_resource
     def demarrer_rejeu(vitesse):
         import live_agent as la
@@ -294,7 +317,7 @@ with t_live:
     direct()
 
 # ------------------------------------------------------------------ RÉSULTATS
-with t_res:
+if page == "Résultats":
     st.markdown(f"### Performance sur la période de test · 05/06/2025 → 31/10/2026 ({d['n_test']} jours)")
     s = pd.DataFrame(met["strategies"] + met["ablation"]).drop_duplicates("strategie")
     ordre = ["Agents LSTM", "Règle technique (MM20)", "Buy and Hold", "Agents LSTM sans coupe-circuit"]
@@ -335,7 +358,7 @@ with t_res:
         "sharpe": st.column_config.NumberColumn("Sharpe", format="%.2f"), "n_ordres": "Ordres"})
 
 # ------------------------------------------------------------------ PRÉVISIONS
-with t_prev:
+if page == "Prévisions":
     st.markdown("### Erreur de prévision du rendement à 5 jours")
     rows = [dict(ensemble=e, modèle=m, MAE=v["MAE"], RMSE=v["RMSE"], direction=v["direction"] * 100)
             for e, dm in met["prevision"].items() for m, v in dm.items()]
@@ -362,7 +385,7 @@ with t_prev:
         st.caption("Axe horizontal : époques d'entraînement. L'arrêt anticipé garde le meilleur point de validation.")
 
 # ------------------------------------------------------------------ TRANSACTIONS
-with t_tx:
+if page == "Transactions":
     st.markdown("### Décisions et ordres des agents sur le test")
     actions = sorted(tr.action.unique())
     f = st.multiselect("Action", actions, default=[a for a in actions if a != "RIEN"])
@@ -376,7 +399,7 @@ with t_tx:
         "v_after": st.column_config.NumberColumn("Valeur après ($)", format="%.0f")})
 
 # ------------------------------------------------------------------ REGISTRE
-with t_bc:
+if page == "Registre":
     from blockchain import verify_chain
     chain, diff = led["chain"], led["difficulty"]
     ok, msg = verify_chain(chain, diff)
@@ -399,7 +422,7 @@ with t_bc:
                  use_container_width=True, hide_index=True)
 
 # ------------------------------------------------------------------ MODÈLE
-with t_mod:
+if page == "Modèle":
     px = pd.Series(res["prix"]["close"], index=pd.to_datetime(res["prix"]["dates"]), name="Réel")
     st.markdown(f"### Prix de clôture DOT/USD · {d['debut']} → {d['fin']}")
     with st.container(border=True):
