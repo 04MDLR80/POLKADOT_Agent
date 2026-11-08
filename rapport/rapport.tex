@@ -31,7 +31,7 @@
   \IfFileExists{figs/logo_ensat.png}{\includegraphics[height=#1]{figs/logo_ensat.png}}{%
   \IfFileExists{figs/logo_ensat.jpg}{\includegraphics[height=#1]{figs/logo_ensat.jpg}}{%
   \IfFileExists{figs/logo_ensat.pdf}{\includegraphics[height=#1]{figs/logo_ensat.pdf}}{}}}}
-\setlength{\headheight}{26pt}
+\setlength{\headheight}{32pt}
 \pagestyle{fancy}
 \fancyhf{}
 \lhead{\logo{11mm}}
@@ -47,7 +47,8 @@
 \thispagestyle{empty}
 \centering
 \vspace*{1.5cm}
-\logo{28mm}\par\vspace{.5cm}
+\IfFileExists{figs/logo_ensat.jpg}{\includegraphics[width=.62\textwidth]{figs/logo_ensat.jpg}\par\vspace{.6cm}}{}
+{\large Université Abdelmalek Essaâdi}\\[.2cm]
 {\large École nationale des sciences appliquées de Tétouan}\\[.2cm]
 {\large Cours de Deep Learning --- GSTR 2, semestre 3}\\[1.2cm]
 {\Huge\bfseries Agents autonomes d'investissement\\[.3cm] sur le Polkadot (DOT/USD)}\\[.8cm]
