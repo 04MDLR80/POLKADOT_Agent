@@ -1276,6 +1276,23 @@
    "prev_hash": "000ab55cafaa26bbb8b2d4365249a48a424c5597eef3ce03f49aecc8a476ed1c",
    "nonce": 11146,
    "hash": "000c4d7086867504714d5e601e9b68ff71679fa7a27ec2cc285d9a4a0f1575ee"
+  },
+  {
+   "index": 78,
+   "sim_time": "2026-11-25",
+   "utc_time": "2026-11-25T13:06:16+00:00",
+   "agent": "SYSTEME",
+   "data": {
+    "changement": "version 2 des agents",
+    "filtre_tendance": "achat seulement si clôture > MM20",
+    "pause_coupe_circuit": "achats bloqués 10 jours après déclenchement, puis réarmement",
+    "pause_restante": 5,
+    "reference": 10000.0,
+    "motif": "diagnostic après 2 semaines : paris de rebond pendant une chute prolongée ; coupe-circuit définitif"
+   },
+   "prev_hash": "000c4d7086867504714d5e601e9b68ff71679fa7a27ec2cc285d9a4a0f1575ee",
+   "nonce": 2867,
+   "hash": "000505bbd434687c338981c5d53218128fcb467041b98c94c333645f049159e9"
   }
  ]
 }
