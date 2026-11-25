@@ -1211,6 +1211,71 @@
    "prev_hash": "000549929e5f7c02b81a1f52238c1bc7d1e649cff1955a5b7cb594e959cab1ce",
    "nonce": 6180,
    "hash": "000e6e205819161e78742358d117107a0e2650654dd4ba5203c378b21e03a0f4"
+  },
+  {
+   "index": 74,
+   "sim_time": "2026-11-24",
+   "utc_time": "2026-11-25T00:33:06+00:00",
+   "agent": "AGENT_1_PREVISION",
+   "data": {
+    "decision_sur_cloture": "2026-11-24",
+    "cloture": 0.6518,
+    "horizon_jours": 5,
+    "rendement_prevu_horizon": 0.017685,
+    "dispersion_ensemble": 0.025758
+   },
+   "prev_hash": "000e6e205819161e78742358d117107a0e2650654dd4ba5203c378b21e03a0f4",
+   "nonce": 2206,
+   "hash": "000b788cec1abe897b33393d5dd286633a6fae65215a24552b1629c4f83dc7af"
+  },
+  {
+   "index": 75,
+   "sim_time": "2026-11-24",
+   "utc_time": "2026-11-25T00:33:06+00:00",
+   "agent": "AGENT_2_STRATEGIE",
+   "data": {
+    "signal": "ACHAT",
+    "seuil_achat": 0.0062,
+    "seuil_vente": -0.0055771907604090015
+   },
+   "prev_hash": "000b788cec1abe897b33393d5dd286633a6fae65215a24552b1629c4f83dc7af",
+   "nonce": 3746,
+   "hash": "000b9cdabf17d85426f06f6233bcc1ba660769562afb08705f09ad7eefbeeebc"
+  },
+  {
+   "index": 76,
+   "sim_time": "2026-11-24",
+   "utc_time": "2026-11-25T00:33:06+00:00",
+   "agent": "AGENT_3_RISQUE",
+   "data": {
+    "decision": "RIEN",
+    "quantite": 0.0,
+    "raison": "coupe-circuit : achats interdits",
+    "plafond": 0.8,
+    "stop_loss": 0.1
+   },
+   "prev_hash": "000b9cdabf17d85426f06f6233bcc1ba660769562afb08705f09ad7eefbeeebc",
+   "nonce": 1275,
+   "hash": "000ab55cafaa26bbb8b2d4365249a48a424c5597eef3ce03f49aecc8a476ed1c"
+  },
+  {
+   "index": 77,
+   "sim_time": "2026-11-25",
+   "utc_time": "2026-11-25T00:33:06+00:00",
+   "agent": "AGENT_4_EXECUTION",
+   "data": {
+    "action_simulee": "RIEN",
+    "quantite": 0.0,
+    "prix_execution": null,
+    "frais": 0.0,
+    "valeur_portefeuille_avant": 8440.0631,
+    "valeur_portefeuille_apres": 8440.0631,
+    "tresorerie": 8440.0631,
+    "unites_DOT": 0.0
+   },
+   "prev_hash": "000ab55cafaa26bbb8b2d4365249a48a424c5597eef3ce03f49aecc8a476ed1c",
+   "nonce": 11146,
+   "hash": "000c4d7086867504714d5e601e9b68ff71679fa7a27ec2cc285d9a4a0f1575ee"
   }
  ]
 }
