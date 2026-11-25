@@ -3,6 +3,7 @@ import json, os, shutil
 import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
+import matplotlib.dates
 import numpy as np
 import pandas as pd
 
@@ -92,3 +93,57 @@ for _, r in tr[tr.action != "RIEN"].iterrows():
     t += f"{r.date_execution:%d/%m/%Y} & {r.action.lower()} & {r.fill:.3f}".replace(".", ",") + f" & {mot} \\\\\n"
 open(f"{ICI}/t_ordres.tex", "w").write(t + "\\bottomrule\\end{tabular}\n")
 print("ok")
+
+# ------------------------------------------------------------------ version 2 et direct
+V2 = json.load(open(f"{OUT}/v2.json"))
+fig, axs = plt.subplots(1, 2, figsize=(6.6, 2.7), sharey=False)
+for ax, (e, titre) in zip(axs, (("val", "Validation (hausse puis rechute)"), ("test", "Test (chute de 75 %)"))):
+    for k, col, lab in (("Buy and Hold", "#2F6FB5", "Buy and Hold"), ("v1", "#7A5CCF", "version 1"), ("v2", "#E6007A", "version 2")):
+        c = V2["courbes"][e][k]
+        ax.plot(pd.to_datetime(c["dates"]), c["valeur"], color=col, lw=1.6 if k == "v2" else 1.1, label=lab)
+    ax.set_title(titre, fontsize=8.5); ax.tick_params(axis="y", labelsize=7); ax.tick_params(axis="x", labelsize=7)
+    ax.xaxis.set_major_locator(matplotlib.dates.MonthLocator(interval=3)); ax.xaxis.set_major_formatter(matplotlib.dates.DateFormatter("%m/%y"))
+axs[0].set_ylabel("Valeur du portefeuille ($)"); axs[1].legend(frameon=False, fontsize=7, loc="upper right")
+fig.tight_layout(); fig.savefig(f"{F}/v2_courbes.pdf"); plt.close(fig)
+
+t = "\\begin{tabular}{llrrrr}\\toprule\nPériode & Stratégie & Valeur finale (\\$) & Rendement & Drawdown max & Ordres \\\\\\midrule\n"
+for e, nom_e in (("val", "Validation"), ("test", "Test")):
+    for k, nom in (("v1", "Version 1"), ("v2", "Version 2"), ("Buy and Hold", "Buy and Hold")):
+        r = V2["resume"][e][k]
+        t += f"{nom_e if k == 'v1' else ''} & {nom} & {n0(r['valeur_finale'])} & {pc(r['rendement'])} & {pc(r['drawdown'])} & {r['ordres']} \\\\\n"
+    t += "\\addlinespace\n" if e == "val" else ""
+open(f"{ICI}/t_v2.tex", "w").write(t + "\\bottomrule\\end{tabular}\n")
+
+t = "\\begin{tabular}{lrrrr}\\toprule\nZone de RSI (14 j) & Jours & Rendement prévu & Rendement réel & Signal d'achat \\\\\\midrule\n"
+for r in V2["diagnostic_rsi"]:
+    t += f"{r['zone']} & {r['n']} & {pc(r['prevu'], 2)} & {pc(r['reel'], 2)} & {r['part_achat']*100:.0f}\\,\\% \\\\\n"
+open(f"{ICI}/t_rsi.tex", "w").write(t + "\\bottomrule\\end{tabular}\n")
+
+LIVE = os.path.join(ICI, "..", "live", "etat_direct.json")
+if os.path.exists(LIVE):
+    L = json.load(open(LIVE))
+    h = pd.DataFrame(L["histo"]); h["t"] = pd.to_datetime(h["t"])
+    fig, ax = plt.subplots(figsize=(6.4, 2.6))
+    ax.plot(h.t, h.valeur, color="#E6007A", lw=1.6, label="agents")
+    ax.plot(h.t, h.bh, color="#2F6FB5", lw=1.1, label="Buy and Hold")
+    for d in L["decisions"]:
+        if d["action"] != "RIEN":
+            x = pd.to_datetime(d["execute_le"]).tz_convert(None) if pd.to_datetime(d["execute_le"]).tzinfo else pd.to_datetime(d["execute_le"])
+            ax.axvline(x, color="#0B8A5A" if d["action"] == "ACHETER" else "#C2362B", lw=.8, ls=":")
+    ax.axhline(8500, color="#999", lw=.7, ls="--"); ax.text(h.t.iloc[0], 8530, "seuil du coupe-circuit (8 500 $)", fontsize=7, color="#777")
+    ax.set_ylabel("Valeur ($)"); ax.legend(frameon=False, fontsize=8, loc="lower left"); ax.tick_params(axis="x", labelsize=7)
+    ax.xaxis.set_major_locator(matplotlib.dates.DayLocator(interval=3)); ax.xaxis.set_major_formatter(matplotlib.dates.DateFormatter("%d/%m"))
+    fig.tight_layout(); fig.savefig(f"{F}/direct.pdf"); plt.close(fig)
+    t = "\\begin{tabular}{llrlr}\\toprule\nClôture du & Ordre & Prix (\\$) & Motif & Valeur après (\\$) \\\\\\midrule\n"
+    motifs = {"achat validé (plafond 80%)": "achat validé", "stop-loss déclenché": "stop-loss", "coupe-circuit : liquidation": "coupe-circuit"}
+    for d in L["decisions"]:
+        if d["action"] != "RIEN":
+            t += f"{pd.Timestamp(d['jour']):%d/%m/%Y} & {d['action'].lower()} & {d['prix']:.4f}".replace(".", ",") + \
+                 f" & {motifs.get(d['raison'], d['raison'])} & {n0(d['valeur_apres'])} \\\\\n"
+    open(f"{ICI}/t_direct.tex", "w").write(t + "\\bottomrule\\end{tabular}\n")
+    D = dict(debut=L["debut"][:10], fin=h.t.iloc[-1].strftime("%d/%m/%Y"), valeur=L["histo"][-1]["valeur"], bh=L["histo"][-1]["bh"],
+             prix0=L["prix_depart"], prix=L["prix"], n_dec=len(L["decisions"]),
+             n_achat=sum(d["signal"] == "ACHAT" for d in L["decisions"]))
+    json.dump(D, open(f"{ICI}/direct.json", "w"))
+    print("direct", D)
+print("v2 ok")

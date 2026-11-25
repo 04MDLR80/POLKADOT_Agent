@@ -92,6 +92,7 @@ Le LSTM a été retenu sur la validation.
 $-75{,}3\,\%$. Mais nos réseaux ne prévoient pas mieux qu'une prévision naïve, et l'écart vient surtout du coupe-circuit de l'agent de
 risque (section~\ref{sec:resultats}).
 \item Un tableau de bord Streamlit et des agents qui tournent seuls tous les jours sur GitHub (section~\ref{sec:direct}).
+\item Après deux semaines en direct, un diagnostic du modèle et une version 2 des agents (section~\ref{sec:v2}).
 \end{itemize}
 
 \begin{figure}[H]\centering
@@ -350,7 +351,82 @@ clôture de 00:00 UTC, car le modèle a été entraîné sur des bougies quotidi
 Pour que tout tourne sans intervention, un workflow GitHub Actions se lance à 00:05 UTC puis toutes les quatre heures. Il récupère les prix, fait décider les
 agents s'il y a une nouvelle bougie clôturée, ajoute les blocs au registre et enregistre l'état dans le dépôt. Le tableau de bord Streamlit lit cet état et
 se met à jour à chaque enregistrement. Au premier passage, le 7 novembre 2026, les agents ont prévu $-0{,}93\,\%$ sur cinq jours à partir de la dernière
-clôture et sont restés en dollars. Quelques jours de fonctionnement ne disent rien de la qualité de la stratégie : un résultat sur une semaine n'a pas de valeur statistique.
+clôture et sont restés en dollars. La section suivante raconte les deux semaines qui ont suivi.
+
+% ------------------------------------------------------------------ 10
+\section{Deux semaines en direct, et une version 2}\label{sec:v2}
+
+\subsection{Ce qui s'est passé}
+
+Du 7 au 25 novembre 2026, le DOT est passé de 0,904 à 0,649\dollar{} ($-28{,}2\,\%$). Les agents ont pris 19 décisions et passé quatre ordres
+(tableau~\ref{tab:direct}). Ils ont acheté le 9 novembre, ont été stoppés le 14, ont racheté le 15, puis le coupe-circuit a tout vendu le 19, quand la
+valeur est passée sous 8\,500\dollar{}. Le 25 novembre, le portefeuille vaut 8\,440\dollar{} ($-15{,}6\,\%$), contre 7\,154\dollar{} pour le Buy and Hold ($-28{,}5\,\%$).
+
+\begin{figure}[H]\centering
+\includegraphics[width=.92\textwidth]{direct.pdf}
+\caption{Simulation en direct du 7 au 25 novembre 2026 (prix Kraken). Pointillés verts : achats ; rouges : ventes.}
+\end{figure}
+
+\begin{table}[H]\centering\small
+\input{t_direct.tex}
+\caption{Les quatre ordres passés en direct.}\label{tab:direct}
+\end{table}
+
+Deux choses nous ont gênés. D'abord, sur 19 jours, le modèle a donné un signal d'achat 16 fois, avec des rendements prévus de $+1$ à $+2{,}5\,\%$
+sur cinq jours, alors que le prix ne faisait que baisser. Ensuite, une fois déclenché, le coupe-circuit ne se désactive jamais : l'agent était condamné
+à rester en dollars jusqu'à la fin, quoi que fasse le marché.
+
+\subsection{Le diagnostic}
+
+Le niveau du prix n'y est pour rien. Toutes nos variables sont des rendements ou des rapports (amplitude relative, écart à la moyenne, RSI) :
+pour le réseau, un DOT à 0,65\dollar{} ressemble à un DOT à 6,50\dollar{}. C'est le type de situation qui pose problème. Le tableau~\ref{tab:rsi}
+regroupe toutes les prévisions du backtest par zone de RSI. Quand le DOT est très survendu, le modèle prévoit en moyenne un rebond et donne un
+signal d'achat 39\,\% du temps, contre 6 à 12\,\% dans les zones intermédiaires. Sur l'historique, ce pari n'était pas absurde : en moyenne, ces
+jours-là ont bien été suivis d'une hausse. Mais ce n'est qu'une moyenne. Dans une chute qui dure, comme en novembre 2026, le rebond ne vient pas, et
+l'agent achète un couteau qui tombe.
+
+\begin{table}[H]\centering\small
+\input{t_rsi.tex}
+\caption{Prévisions du LSTM selon la zone de RSI (toutes les périodes, cinq groupes de même taille).}\label{tab:rsi}
+\end{table}
+
+Nous avons relu le coupe-circuit avec le même regard. Sur la validation (août 2024 à mai 2025), il s'est déclenché dès le 1\textsuperscript{er} octobre 2024, après un stop-loss, et a bloqué l'agent
+pendant toute la remontée de fin 2024, alors que le DOT passait de 3,9 à 10,5\dollar{} entre début novembre et début décembre : la version 1 y perd 16,9\,\%. Sur le test, le même blocage a été une chance, parce que le marché s'effondrait.
+Le résultat de la section~\ref{sec:resultats} dépend donc beaucoup du calendrier.
+
+\subsection{Ce que nous avons changé}
+
+Nous avons fait deux changements, sans toucher au réseau :
+\begin{itemize}
+\item \textbf{Filtre de tendance.} Un signal d'achat n'est suivi que si la clôture est au-dessus de sa moyenne sur 20 jours.
+\item \textbf{Coupe-circuit réarmable.} Après un déclenchement, les achats sont bloqués pendant 10 jours. Ensuite, le coupe-circuit se réarme, avec la
+valeur du portefeuille à ce moment-là comme nouvelle référence.
+\end{itemize}
+
+Nous avons comparé six combinaisons sur la validation (filtre ou non ; coupe-circuit définitif, réarmé ou absent). Il faut être clair sur ce choix.
+En rendement pur, la meilleure combinaison sur la validation était le coupe-circuit réarmé sans filtre ($+114{,}5\,\%$) ; elle aurait perdu
+37,9\,\% sur le test. Nous avons retenu le filtre parce qu'il répond au défaut vu en direct, qu'il donne la plus petite perte maximale sur la validation
+($-13{,}0\,\%$ au lieu de $-16{,}9\,\%$), et que son résultat sur cette période ne dépend pas du réglage du coupe-circuit. Nous n'avons regardé le test qu'après.
+
+\begin{table}[H]\centering\small
+\input{t_v2.tex}
+\caption{Version 1 et version 2, sur la validation (01/08/2024 → 31/05/2025) et sur le test.}\label{tab:v2}
+\end{table}
+
+\begin{figure}[H]\centering
+\includegraphics[width=\textwidth]{v2_courbes.pdf}
+\caption{Valeur du portefeuille avec les deux versions des agents.}
+\end{figure}
+
+La version 2 bat le Buy and Hold sur les deux périodes. Sur le test, elle fait moins bien que la version 1 ($-28{,}7\,\%$ contre $-18{,}1\,\%$) :
+une fois réarmée, elle recommence à acheter pendant la chute, et le filtre limite les dégâts sans les supprimer. Sur la validation, elle fait beaucoup
+mieux ($+92{,}7\,\%$ contre $-16{,}9\,\%$). En enchaînant les rendements des deux périodes, 10\,000\dollar{} deviennent 13\,700\dollar{} avec la
+version 2 et 6\,800\dollar{} avec la version 1. Nous préférons une stratégie un peu moins bonne dans un cas et bien meilleure dans l'autre à une
+stratégie qui ne gagne que si le marché s'effondre.
+
+La version 2 tourne en direct depuis le 25 novembre, et le changement est inscrit dans le registre (un bloc \texttt{SYSTEME}). Le compteur du
+coupe-circuit a repris où il en était : déclenché le 19 novembre, il se réarme à la décision sur la clôture du 29 novembre, avec 8\,440\dollar{} comme
+nouvelle référence. Le backtest principal de la section~\ref{sec:resultats} reste celui de la version 1 : nous ne l'avons pas réécrit après coup.
 
 % ------------------------------------------------------------------ 10
 \section{Limites et suite}\label{sec:limites}
@@ -362,6 +438,8 @@ réglage qui aurait donné un meilleur chiffre.
 donnerait une image plus solide.
 \item \textbf{Peu de données pour du Deep Learning.} 1\,226 exemples d'entraînement, c'est peu. Des données horaires, ou plusieurs actifs, aideraient.
 \item \textbf{Un modèle de coûts simple.} Frais et glissement fixes ; pas d'impact sur le prix, pas d'ordres partiels.
+\item \textbf{Une version 2 décidée après avoir vu le direct.} Nous l'avons choisie sur la validation, mais il n'y a qu'une période de validation.
+Seule une évaluation par fenêtres glissantes dirait si le filtre de tendance aide vraiment, ou s'il colle simplement aux deux périodes que nous connaissons.
 \item \textbf{Une blockchain pédagogique.} Une seule machine écrit le registre : il garantit l'intégrité de l'historique, pas la décentralisation.
 \end{itemize}
 
@@ -376,6 +454,10 @@ d'information, un registre vérifiable, un tableau de bord et une simulation en 
 n'est pas grâce à la prévision : c'est le coupe-circuit qui a évité d'acheter une chute de $-75\,\%$. Si nous devions retenir une leçon, ce serait celle-là :
 sur un actif aussi bruité, la gestion du risque compte plus que le modèle, et un bon protocole d'évaluation sert surtout à ne pas se raconter d'histoires.
 
+Les deux semaines en direct nous en ont appris davantage que le backtest. Elles ont montré l'autre face du coupe-circuit, qui figeait l'agent pour toujours,
+et un modèle qui achète les chutes en espérant un rebond. La version 2 corrige ces deux points sans toucher au réseau. Elle fait mieux que le Buy and Hold
+sur la validation comme sur le test, mais son vrai juge sera la suite de la simulation en direct.
+
 \appendix
 \section{Livrables et reproduction}
 
@@ -383,9 +465,10 @@ sur un actif aussi bruité, la gestion du risque compte plus que le modèle, et 
 \item Dépôt : \texttt{github.com/04MDLR80/POLKADOT\_Agent}.
 \item \texttt{python3 main.py data/dot\_usd\_complet.csv} : entraîne les réseaux et lance les simulations (environ 2 minutes).
 \item \texttt{python3 verify\_chain.py outputs/ledger.json} : vérifie le registre.
+\item \texttt{python3 analyse\_v2.py} : diagnostic et comparaison des versions 1 et 2 (\texttt{outputs/v2.json}).
 \item \texttt{streamlit run streamlit\_app.py} : tableau de bord.
 \item \texttt{python3 trade\_daily.py} : un passage des agents en direct (appelé par GitHub Actions).
-\item \texttt{python3 rapport/assets.py} puis \texttt{latexmk -pdf rapport/rapport.tex} : régénère les figures, les tableaux et ce rapport.
+\item \texttt{python3 rapport/assets.py} puis \texttt{latexmk -xelatex rapport/rapport.tex} : régénère les figures, les tableaux et ce rapport.
 \end{itemize}
 
 Données : Investing.com (DOT/USD historique) et API publique de Kraken pour le direct.

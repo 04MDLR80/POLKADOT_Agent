@@ -28,7 +28,7 @@ import numpy as np
 import pandas as pd
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from agents import ExecutionAgent, Portfolio, RiskAgent, StrategyAgent  # noqa: E402
+from agents import VERSION_2, ExecutionAgent, Portfolio, RiskAgent, StrategyAgent  # noqa: E402
 from blockchain import Blockchain, verify_chain  # noqa: E402
 from data_prep import FEATURES, add_features, load_raw  # noqa: E402
 from gru_model import GRURegressor, LSTMRegressor  # noqa: E402
@@ -93,6 +93,7 @@ class Simulateur:
     def __init__(self, modele, mode, reset=False):
         self.m, self.mode = modele, mode
         self.cfg = dict(modele.meta["config"])
+        self.cfg.update(VERSION_2)          # v2 : filtre de tendance MM20 + coupe-circuit réarmable
         self.lock = threading.Lock()
         self.fichier = os.path.join(DOSSIER, f"etat_{mode}.json")
         self.fichier_reg = os.path.join(DOSSIER, f"registre_{mode}.json")
@@ -121,6 +122,7 @@ class Simulateur:
         self.bh_unites = None
         self.histo = []        # points de valorisation {t, prix, valeur, bh}
         self.decisions = []
+        self.risque = {}       # état du coupe-circuit {pause_restante, reference}
 
     def _charger(self):
         e = json.load(open(self.fichier, encoding="utf-8"))
@@ -135,13 +137,31 @@ class Simulateur:
         self.reg.difficulty, self.reg.chain = d["difficulty"], d["chain"]
         for k in ("debut", "derniere_bougie", "prix", "prix_depart", "bh_unites", "histo", "decisions"):
             setattr(self, k, e[k])
+        self.risque = e.get("risque")
+        if self.risque is None:
+            self._passer_en_v2()
+
+    def _passer_en_v2(self):
+        """Migration d'un état v1 : reprend le décompte du coupe-circuit à partir de son dernier déclenchement."""
+        pause, c = self.cfg["pause_coupe_circuit"], self.cfg["capital_initial"]
+        idx = [i for i, d in enumerate(self.decisions) if d["raison"].startswith("coupe-circuit : liquidation")]
+        if not idx:
+            idx = [i for i, d in enumerate(self.decisions) if d["raison"].startswith("coupe-circuit")][:1]
+        restante = max(0, pause - (len(self.decisions) - 1 - idx[-1])) if idx else 0
+        ref = c if restante > 0 or not idx else self.pf.value(self.prix or 0)
+        self.risque = dict(pause_restante=restante, reference=ref)
+        self.reg.add_event("SYSTEME", datetime.now(timezone.utc).strftime("%Y-%m-%d"), dict(
+            changement="version 2 des agents", filtre_tendance="achat seulement si clôture > MM20",
+            pause_coupe_circuit=f"achats bloqués {pause} jours après déclenchement, puis réarmement",
+            pause_restante=restante, reference=round(ref, 2),
+            motif="diagnostic après 2 semaines : paris de rebond pendant une chute prolongée ; coupe-circuit définitif"))
 
     def sauver(self):
         if self.mode != "direct":
             return
         e = dict(portefeuille=self.pf.__dict__, pnls=self.ex.closed_pnls, n_ordres=self.ex.n_orders,
                  debut=self.debut, derniere_bougie=self.derniere_bougie, prix=self.prix, prix_depart=self.prix_depart,
-                 bh_unites=self.bh_unites, histo=self.histo[-5000:], decisions=self.decisions)
+                 bh_unites=self.bh_unites, histo=self.histo[-5000:], decisions=self.decisions, risque=self.risque, version=2)
         tmp = self.fichier + ".tmp"
         json.dump(e, open(tmp, "w", encoding="utf-8"), ensure_ascii=False)
         os.replace(tmp, self.fichier)
@@ -165,9 +185,18 @@ class Simulateur:
             if self.derniere_bougie is not None and jour <= self.derniere_bougie:
                 return None
             mu, sg = self.m.prevoir(bougies)
-            signal = StrategyAgent(self.cfg).decide(mu, sg, self.pf.units > 0)
-            risque = RiskAgent(self.cfg)
+            cl = bougies["Close"].astype(float)
+            mm20 = float(cl.tail(20).mean())
+            tendance = bool(cl.iloc[-1] > mm20)
+            st = StrategyAgent(self.cfg)
+            signal = st.decide(mu, sg, self.pf.units > 0, tendance_haussiere=tendance)
+            risque = RiskAgent(self.cfg, etat=self.risque)
             action, qty, raison = risque.review(signal, self.pf, prix_execution, self.cfg["capital_initial"])
+            self.risque = risque.etat()
+            if st.raison and action == "RIEN":
+                raison = st.raison
+            if raison.startswith("coupe-circuit") and self.risque["pause_restante"] > 0:
+                raison += f" (réarmement dans {self.risque['pause_restante']} j)"
             v_av = self.pf.value(prix_execution)
             res = self.ex.execute(action, qty, prix_execution, self.pf)
             v_ap = self.pf.value(prix_execution)
@@ -176,9 +205,12 @@ class Simulateur:
                 decision_sur_cloture=jour, cloture=float(bougies["Close"].iloc[-1]), horizon_jours=self.m.meta["horizon"],
                 rendement_prevu_horizon=round(mu, 6), dispersion_ensemble=round(sg, 6)))
             self.reg.add_event("AGENT_2_STRATEGIE", jour, dict(
-                signal=signal, seuil_achat=self.cfg["seuil_achat"], seuil_vente=self.cfg["seuil_vente"]))
+                signal=signal, seuil_achat=self.cfg["seuil_achat"], seuil_vente=self.cfg["seuil_vente"],
+                cloture=float(cl.iloc[-1]), mm20=round(mm20, 6), filtre_tendance=st.raison is not None))
             self.reg.add_event("AGENT_3_RISQUE", jour, dict(
-                decision=action, quantite=round(qty, 6), raison=raison, plafond=risque.cap, stop_loss=risque.stop))
+                decision=action, quantite=round(qty, 6), raison=raison, plafond=risque.cap, stop_loss=risque.stop,
+                coupe_circuit=dict(seuil=risque.circuit, reference=round(risque.reference, 2),
+                                   pause_restante=risque.pause_restante)))
             b4 = self.reg.add_event("AGENT_4_EXECUTION", quand[:10], dict(
                 action_simulee=action, quantite=round(res["qty"], 6),
                 prix_execution=None if res["fill"] is None else round(res["fill"], 6), frais=round(res["fee"], 4),
@@ -186,6 +218,7 @@ class Simulateur:
                 tresorerie=round(self.pf.cash, 4), unites_DOT=round(self.pf.units, 6)))
             d = dict(jour=jour, execute_le=quand, cloture=float(bougies["Close"].iloc[-1]), mu=mu, sigma=sg,
                      signal=signal, action=action, quantite=res["qty"], prix=res["fill"], frais=res["fee"],
+                     mm20=mm20, tendance_haussiere=tendance, pause_restante=self.risque["pause_restante"],
                      raison=raison, valeur_apres=v_ap, blocs=[b1["index"], b4["index"]], hash=b4["hash"])
             self.decisions.append(d)
             self.derniere_bougie = jour
@@ -209,7 +242,9 @@ class Simulateur:
                 debut=self.debut, prix=prix, prix_depart=self.prix_depart, capital=c, valeur=val, buy_hold=bh,
                 tresorerie=self.pf.cash, unites=self.pf.units, prix_entree=self.pf.entry_price,
                 exposition=(self.pf.units * prix / val) if prix and val else 0.0,
-                coupe_circuit_actif=bool(self.cfg["coupe_circuit"] and val < self.cfg["coupe_circuit"] * c),
+                coupe_circuit_actif=bool(self.risque.get("pause_restante", 0) > 0 or (self.cfg["coupe_circuit"] and val <
+                                         self.cfg["coupe_circuit"] * (self.risque.get("reference") or c))),
+                pause_restante=self.risque.get("pause_restante", 0), reference=self.risque.get("reference") or c,
                 n_ordres=self.ex.n_orders, trades_clotures=len(self.ex.closed_pnls), trades_gagnants=gagnants,
                 derniere_bougie=self.derniere_bougie, decisions=self.decisions[-60:], n_decisions=len(self.decisions),
                 histo=hist, config=self.cfg, modele=self.m.meta["famille"], n_reseaux=len(self.m.reseaux),

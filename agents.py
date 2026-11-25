@@ -22,7 +22,14 @@ CONFIG = dict(
     seuil_achat=0.006,          # rendement attendu minimal pour acheter (couvre les coûts aller-retour)
     seuil_vente=-0.002,         # rendement attendu en dessous duquel on sort
     confiance=0.5,              # achat seulement si mu > confiance * sigma_ensemble
+    filtre_tendance=None,       # v2 : "mm20" = achat seulement si la clôture est au-dessus de sa moyenne 20 jours
+    pause_coupe_circuit=0,      # v2 : 0 = coupe-circuit définitif (v1) ; n > 0 = achats bloqués n jours puis réarmement
 )
+
+# Version 2 (25/11/2026), décidée après deux semaines en direct et choisie sur la validation :
+# le modèle parie sur un rebond quand le DOT est très survendu, ce qui échoue pendant une chute prolongée,
+# et le coupe-circuit définitif bloquait l'agent pour toujours (sur la validation, il l'a figé pendant la remontée de fin 2024).
+VERSION_2 = dict(filtre_tendance="mm20", pause_coupe_circuit=10)
 
 
 @dataclass
@@ -54,8 +61,13 @@ class StrategyAgent:
     def __init__(self, cfg):
         self.c = cfg
 
-    def decide(self, mu, sigma, in_position):
+    def decide(self, mu, sigma, in_position, tendance_haussiere=None):
+        """tendance_haussiere : clôture > MM20 (utilisé seulement si filtre_tendance = "mm20")."""
+        self.raison = None
         if mu > self.c["seuil_achat"] and mu > self.c["confiance"] * sigma:
+            if self.c.get("filtre_tendance") == "mm20" and tendance_haussiere is False:
+                self.raison = "filtre de tendance : clôture sous la MM20"
+                return "CONSERVATION"
             return "ACHAT"
         if in_position and mu < self.c["seuil_vente"]:
             return "VENTE"
@@ -65,22 +77,42 @@ class StrategyAgent:
 class RiskAgent:
     agent_id = "AGENT_3_RISQUE"
 
-    def __init__(self, cfg, cap=None, stop=None, circuit=None):
+    def __init__(self, cfg, cap=None, stop=None, circuit=None, pause=None, etat=None):
         self.c = cfg
         self.cap = cfg["plafond_exposition"] if cap is None else cap
         self.stop = cfg["stop_loss"] if stop is None else stop
         self.circuit = cfg["coupe_circuit"] if circuit is None else circuit
+        self.pause = cfg.get("pause_coupe_circuit", 0) if pause is None else pause
+        etat = etat or {}
+        self.pause_restante = etat.get("pause_restante", 0)   # jours de blocage restants
+        self.reference = etat.get("reference")                 # valeur de référence du coupe-circuit
+
+    def etat(self):
+        return dict(pause_restante=self.pause_restante, reference=self.reference)
 
     def review(self, signal, pf: Portfolio, open_px, initial):
+        if self.reference is None:
+            self.reference = initial
         eq = pf.value(open_px)
+        if self.pause_restante > 0:                      # v2 : décompte de la pause, puis réarmement
+            self.pause_restante -= 1
+            if self.pause_restante == 0:
+                self.reference = eq
+        ref = self.reference
+        action = self._review(signal, pf, open_px, eq, ref)
+        if action[2].startswith("coupe-circuit") and self.pause and self.pause_restante == 0:
+            self.pause_restante = self.pause
+        return action
+
+    def _review(self, signal, pf, open_px, eq, ref):
         if pf.units > 0 and self.stop and open_px <= pf.entry_price * (1 - self.stop):
             return "VENDRE", pf.units, "stop-loss déclenché"
-        if pf.units > 0 and self.circuit and eq < self.circuit * initial:
+        if pf.units > 0 and self.circuit and eq < self.circuit * ref:
             return "VENDRE", pf.units, "coupe-circuit : liquidation"
         if signal == "VENTE":
             return ("VENDRE", pf.units, "signal de vente validé") if pf.units > 0 else ("RIEN", 0.0, "aucune position à vendre")
         if signal == "ACHAT":
-            if self.circuit and eq < self.circuit * initial:
+            if self.circuit and eq < self.circuit * ref:
                 return "RIEN", 0.0, "coupe-circuit : achats interdits"
             fill = open_px * (1 + self.c["glissement"])
             room = self.cap * eq - pf.units * open_px

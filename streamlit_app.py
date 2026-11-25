@@ -26,6 +26,7 @@ SERIES = {  # palette validée (écart CVD >= 10, contraste >= 3:1) ; une couleu
     "Agents": ACCENT, "Agents LSTM": ACCENT, "Buy and Hold": "#2F6FB5", "Règle technique (MM20)": "#B87800",
     "Agents GRU": "#7A5CCF", "Agents LSTM sans coupe-circuit": "#00907F",
     "Réel": "#2F6FB5", "LSTM": ACCENT, "GRU": "#7A5CCF", "train": "#2F6FB5", "validation": ACCENT,
+    "Version 2": ACCENT, "Version 1": "#7A5CCF",
 }
 
 st.set_page_config(page_title="Agents DOT/USD", page_icon="📈", layout="wide", initial_sidebar_state="expanded")
@@ -197,7 +198,7 @@ with st.sidebar:
         if mode == "rejeu":
             vitesse = st.slider("Secondes par jour", 0.1, 3.0, 0.5, 0.1)
     st.markdown(f'<div class="side-foot">Données {d["debut"]} → {d["fin"]}<br>Modèle {met["modele_agents"]} · horizon {d["horizon"]} j<br>'
-                'Simulation : aucun ordre réel</div>', unsafe_allow_html=True)
+                'Agents version 2 depuis le 25/11/2026<br>Simulation : aucun ordre réel</div>', unsafe_allow_html=True)
 
 # ------------------------------------------------------------------ DIRECT
 if page == "Direct":
@@ -249,8 +250,11 @@ if page == "Direct":
                     + kpi("Position", f"{v['exposition'] * 100:.0f} %".replace(".", ","),
                           f"{fr(v['unites'], 3)} DOT · {v['n_ordres']} ordres")
                     + '</div>', unsafe_allow_html=True)
-        if v["coupe_circuit_actif"]:
-            st.error("Coupe-circuit actif : la valeur est passée sous 85 % du capital, les achats sont bloqués.")
+        if v.get("pause_restante", 0) > 0:
+            st.warning(f"Coupe-circuit déclenché : achats bloqués encore {v['pause_restante']} jour(s). "
+                       "Il se réarme ensuite, avec la valeur du portefeuille à ce moment-là comme nouvelle référence.")
+        elif v["coupe_circuit_actif"]:
+            st.error("Coupe-circuit actif : la valeur est passée sous 85 % de sa référence, les achats sont bloqués.")
 
         g, p = st.columns([2.1, 1], gap="medium")
         with g:
@@ -281,7 +285,10 @@ if page == "Direct":
                         f'<div class="row"><span>Incertitude (écart des réseaux)</span><span class="num">±{fr(x["sigma"] * 100, 2)} %</span></div>'
                         f'<div class="row"><span>Clôture du</span><span>{x["jour"]}</span></div>'
                         f'<div class="row"><span>Action simulée</span><span>{x["action"].capitalize()}</span></div>'
-                        f'<div class="row"><span>Raison</span><span>{x["raison"]}</span></div>',
+                        f'<div class="row"><span>Raison</span><span>{x["raison"]}</span></div>'
+                        + (f'<div class="row"><span>Tendance (clôture / MM20)</span><span>'
+                           f'{"haussière" if x["tendance_haussiere"] else "baissière"} · {fr(x["cloture"], 4)} / {fr(x["mm20"], 4)}</span></div>'
+                           if "tendance_haussiere" in x else ""),
                         unsafe_allow_html=True)
                 else:
                     st.caption("Pas encore de décision.")
@@ -348,6 +355,43 @@ if page == "Résultats":
         "sharpe": st.column_config.NumberColumn("Sharpe", format="%.2f"),
         "n_ordres": "Ordres", "frais_totaux": st.column_config.NumberColumn("Frais ($)", format="%.0f"),
         "taux_reussite": st.column_config.NumberColumn("Réussite (%)", format="%.0f")})
+    v2p = os.path.join(OUT, "v2.json")
+    if os.path.exists(v2p):
+        V2 = json.load(open(v2p, encoding="utf-8"))
+        st.markdown("### Version 2 des agents (25/11/2026)")
+        st.markdown('<div class="note">Deux changements, décidés après deux semaines en direct et choisis sur la validation : '
+                    'l\'agent n\'achète que si le DOT clôture au-dessus de sa moyenne 20 jours (le modèle pariait sur un rebond '
+                    'pendant les chutes), et le coupe-circuit se réarme après 10 jours au lieu de bloquer l\'agent pour toujours. '
+                    'La version 1 gagnait sur le test (une chute) mais perdait 16,9 % sur la validation (une hausse) ; '
+                    'la version 2 bat le Buy and Hold sur les deux périodes.</div>', unsafe_allow_html=True)
+        lignes = []
+        for e, nom_e in (("val", "Validation"), ("test", "Test")):
+            a, b = V2["periodes"][e]
+            for k, nom in (("v1", "Version 1"), ("v2", "Version 2"), ("Buy and Hold", "Buy and Hold")):
+                r = V2["resume"][e][k]
+                lignes.append({"Période": f"{nom_e} ({a} → {b})", "Stratégie": nom, "Valeur finale ($)": r["valeur_finale"],
+                               "Rendement (%)": r["rendement"] * 100, "Drawdown max (%)": r["drawdown"] * 100,
+                               "Ordres": r["ordres"]})
+        st.dataframe(pd.DataFrame(lignes), use_container_width=True, hide_index=True, column_config={
+            "Valeur finale ($)": st.column_config.NumberColumn(format="%.0f"),
+            "Rendement (%)": st.column_config.NumberColumn(format="%+.1f"),
+            "Drawdown max (%)": st.column_config.NumberColumn(format="%.1f")})
+        per = st.radio("Période", ["val", "test"], horizontal=True, key="v2per",
+                       format_func=lambda e: "Validation" if e == "val" else "Test")
+        cv = V2["courbes"][per]
+        with st.container(border=True):
+            dfv = pd.DataFrame({{"v1": "Version 1", "v2": "Version 2"}.get(k, k): pd.Series(c["valeur"], index=pd.to_datetime(c["dates"]))
+                                for k, c in cv.items()})
+            st.altair_chart(courbes(dfv, 320, ",.0f"), use_container_width=True)
+        with st.expander("Toutes les variantes testées (filtre × coupe-circuit)"):
+            gr = pd.DataFrame(V2["grille"]).assign(rendement=lambda x: x.rendement * 100, drawdown=lambda x: x.drawdown * 100)
+            st.dataframe(gr, use_container_width=True, hide_index=True, column_config={
+                "ensemble": "Période", "filtre": "Filtre de tendance", "coupe_circuit": "Coupe-circuit",
+                "valeur_finale": st.column_config.NumberColumn("Valeur finale ($)", format="%.0f"),
+                "rendement": st.column_config.NumberColumn("Rendement (%)", format="%+.1f"),
+                "drawdown": st.column_config.NumberColumn("Drawdown max (%)", format="%.1f"),
+                "sharpe": st.column_config.NumberColumn("Sharpe", format="%.2f"), "ordres": "Ordres"})
+
     st.markdown("### Sensibilité aux paramètres de risque et aux frais")
     sn = pd.DataFrame(met["sensibilite"])
     sn = sn.assign(rendement_total=sn.rendement_total * 100, max_drawdown=sn.max_drawdown * 100)

@@ -64,7 +64,7 @@ sur le prix réel de DOT/USD (API publique Kraken, sans compte ni clé). Aucun o
 
 ```bash
 python live_agent.py            # direct : tableau de bord sur http://localhost:8050
-python live_agent.py --rejeu    # rejeu accéléré de la période de test (même tableau de bord)
+python live_agent.py --rejeu    # rejeu accéléré de la période de test avec la version 2 (7 128,17 $)
 python live_agent.py --reset    # repartir de 10 000 $ en direct
 ```
 
@@ -86,9 +86,21 @@ streamlit run streamlit_app.py
 Onglets : Direct (prix Kraken en temps réel, ou rejeu accéléré), Résultats du test, Prévisions, Transactions,
 Blockchain (vérification + téléchargement de `ledger.json`), Données & modèle.
 
-## Agents autonomes (GitHub Actions)
+## Version 2 des agents (25/11/2026)
 
-`.github/workflows/trade.yml` lance `trade_daily.py` à 00:05 UTC (juste après la clôture quotidienne) puis toutes
-les 4 h : prix Kraken, décision des 4 agents sur toute nouvelle bougie clôturée, ordre **simulé**, blocs ajoutés au
-registre. L'état (`live/`) est commité ; Streamlit se met à jour à chaque commit. Lancement manuel : onglet Actions →
-« Agents autonomes DOT/USD » → Run workflow.
+Après deux semaines en direct, deux défauts sont apparus : le modèle donne un signal d'achat quand le DOT est très survendu
+(pari de rebond) et continue d'acheter pendant une chute prolongée ; le coupe-circuit, une fois déclenché, bloquait l'agent pour toujours.
+
+- **Filtre de tendance** : un achat n'est suivi que si la clôture est au-dessus de sa moyenne 20 jours.
+- **Coupe-circuit réarmable** : achats bloqués 10 jours après déclenchement, puis réarmement avec la valeur du moment comme référence.
+
+Choisie sur la validation (`python3 analyse_v2.py` → `outputs/v2.json`) :
+
+| | Validation (08/2024 → 05/2025) | Test (06/2025 → 10/2026) |
+|---|---|---|
+| Version 1 | −16,9 % | −18,1 % |
+| Version 2 | +92,7 % | −28,7 % |
+| Buy and Hold | −24,0 % | −75,3 % |
+
+Le backtest principal (`main.py`) reste celui de la version 1. La simulation en direct utilise la version 2 depuis le 25/11/2026 ;
+le changement est inscrit dans le registre (bloc `SYSTEME`). Détails : rapport, section 10.
