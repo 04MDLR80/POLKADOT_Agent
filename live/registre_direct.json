@@ -1439,6 +1439,79 @@
    "prev_hash": "000dbdc5b7e2668140811d6816d3b3f10389a358a17d476db70e092405d47d65",
    "nonce": 3287,
    "hash": "000b682fed96153359743fd469bd46f04dc11e8ccc0c152b11a161ca9cf63fce"
+  },
+  {
+   "index": 87,
+   "sim_time": "2026-11-27",
+   "utc_time": "2026-11-28T07:31:07+00:00",
+   "agent": "AGENT_1_PREVISION",
+   "data": {
+    "decision_sur_cloture": "2026-11-27",
+    "cloture": 0.6685,
+    "horizon_jours": 5,
+    "rendement_prevu_horizon": 0.01667,
+    "dispersion_ensemble": 0.022597
+   },
+   "prev_hash": "000b682fed96153359743fd469bd46f04dc11e8ccc0c152b11a161ca9cf63fce",
+   "nonce": 1120,
+   "hash": "000d703a88a60deab44894ae777a96a9b58980abc2dfafbf3d10b1c323053d8c"
+  },
+  {
+   "index": 88,
+   "sim_time": "2026-11-27",
+   "utc_time": "2026-11-28T07:31:07+00:00",
+   "agent": "AGENT_2_STRATEGIE",
+   "data": {
+    "signal": "CONSERVATION",
+    "seuil_achat": 0.0062,
+    "seuil_vente": -0.0055771907604090015,
+    "cloture": 0.6685,
+    "mm20": 0.73509,
+    "filtre_tendance": true
+   },
+   "prev_hash": "000d703a88a60deab44894ae777a96a9b58980abc2dfafbf3d10b1c323053d8c",
+   "nonce": 6358,
+   "hash": "000f8c87251bcce642cfd503eddfbfe2e4f289db45d499a745bde44b0dcd9586"
+  },
+  {
+   "index": 89,
+   "sim_time": "2026-11-27",
+   "utc_time": "2026-11-28T07:31:07+00:00",
+   "agent": "AGENT_3_RISQUE",
+   "data": {
+    "decision": "RIEN",
+    "quantite": 0.0,
+    "raison": "filtre de tendance : clôture sous la MM20",
+    "plafond": 0.8,
+    "stop_loss": 0.1,
+    "coupe_circuit": {
+     "seuil": 0.85,
+     "reference": 10000.0,
+     "pause_restante": 2
+    }
+   },
+   "prev_hash": "000f8c87251bcce642cfd503eddfbfe2e4f289db45d499a745bde44b0dcd9586",
+   "nonce": 235,
+   "hash": "0001659461fd19a0ea26a15684d9719109f4e2f9f807dc851ae8cb958eb992e7"
+  },
+  {
+   "index": 90,
+   "sim_time": "2026-11-28",
+   "utc_time": "2026-11-28T07:31:07+00:00",
+   "agent": "AGENT_4_EXECUTION",
+   "data": {
+    "action_simulee": "RIEN",
+    "quantite": 0.0,
+    "prix_execution": null,
+    "frais": 0.0,
+    "valeur_portefeuille_avant": 8440.0631,
+    "valeur_portefeuille_apres": 8440.0631,
+    "tresorerie": 8440.0631,
+    "unites_DOT": 0.0
+   },
+   "prev_hash": "0001659461fd19a0ea26a15684d9719109f4e2f9f807dc851ae8cb958eb992e7",
+   "nonce": 3237,
+   "hash": "000e69972baab01c03c56ee1d1f7f7609a9e42bc1e074c98808a570f4751b6d7"
   }
  ]
 }
